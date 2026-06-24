@@ -1,0 +1,67 @@
+[gd_scene format=4 uid="uid://bh18y6isbatap"]
+
+[ext_resource type="Texture2D" uid="uid://dch67us0wyi8e" path="res://MinesAndCaves_Set_blend_gltf_fbx/textures/Mines_Ground_1k_Diffuse.png" id="1_cls27"]
+[ext_resource type="Texture2D" uid="uid://dert1yelqp2p4" path="res://MinesAndCaves_Set_blend_gltf_fbx/textures/Mines_Ground_1k_Roughness.png" id="2_d12jj"]
+[ext_resource type="Texture2D" uid="uid://drbrxo86jbt4l" path="res://MinesAndCaves_Set_blend_gltf_fbx/textures/Mines_Ground_1k_Normal.png" id="3_k0gqv"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_hftc7"]
+resource_name = "Mines_Ground"
+cull_mode = 2
+albedo_texture = ExtResource("1_cls27")
+metallic_texture = ExtResource("2_d12jj")
+metallic_texture_channel = 2
+roughness_texture = ExtResource("2_d12jj")
+roughness_texture_channel = 1
+normal_enabled = true
+normal_texture = ExtResource("3_k0gqv")
+
+[sub_resource type="ArrayMesh" id="ArrayMesh_7lmui"]
+_surfaces = [{
+"aabb": AABB(-1.0709286, -0.03001432, -1.0727545, 2.1452894, 0.08536552, 2.2298121),
+"format": 34896613377,
+"index_count": 66,
+"index_data": PackedByteArray("AAABAAIAAwABAAAAAAACAAQAAgAFAAQABgAFAAIABwABAAMACAAGAAIAAQAIAAIACAAJAAYACgABAAcACAALAAkACwAMAAkADQAMAAsADgALAAgADQALAA4AAQAOAAgADQAOAA8ACgAQAAEADgABABAADwAOABAAEQAQAAoADwAQABEA"),
+"name": "Mines_Ground",
+"primitive": 3,
+"uv_scale": Vector4(0, 0, 0, 0),
+"vertex_count": 18,
+"vertex_data": PackedByteArray("/dMBWkcEAACq7WvbBzYAAOobdqtqIwAABPsBWkcEAABuMAFaAAAAAO8BAVouAwAAkAEBWmojAADg/wFaBzYAAHJJNfVrggAArwUBWpfJAAD//wFaP84AACwj//+XyQAAAAABWlf7AACvNwFaV/sAAKRtNfUkpAAA99ABWv//AACk6narP84AACL7AAD+/wAA")
+}]
+blend_shape_mode = 0
+
+[sub_resource type="ArrayMesh" id="ArrayMesh_rf0gq"]
+resource_name = "MinesAndCave_Set_Ground_Mines_D"
+_surfaces = [{
+"aabb": AABB(-1.0709286, -0.03001432, -1.0727545, 2.1452894, 0.08536552, 2.2298121),
+"attribute_data": PackedByteArray("1P409BTx8Po59tXD+/87yYrHzf+Pxwf6OvGh+jn21cMg/wG9//8wyeC5Dv+PxwX6jMfM/9T+d/4V8fT61P419OzI/cU4u4u8yMiyvWLc3s9O9tO8UfbjwwC6aPMj01zZn8cn+hPTT9nqyNTFT9zMzzPx7voBumrzoMcp+sW5f/5CuyHLQrt+vBnJvcVN9tu8Gf/7vEn268NJ8fH/FvHN+r7+vf5J3M/P1sj8xRDJr71CuyHLHMm/xRjTSNkAumjzlsf//0Txzvot8fL/E9NP2Tnx6fqMxyn6KfHz+k/czM9S9tXDSdzPz9DI5L1O9tC8"),
+"format": 34896613399,
+"index_count": 66,
+"index_data": PackedByteArray("AAABAAIAAAACAAMABAAFAAYABwAIAAkACgALAAwADQAOAA8AEAARABIAEwAUABUAFgAXABgAGQAaABsAHAAZABsAHQAeAB8AIAAhACIAIwAkACUAJgAnACgAKQAqACsALAAtAC4ALAAuAC8AMAAxADIAMwA0ADUANgA3ADgAOQA6ADsA"),
+"material": SubResource("StandardMaterial3D_hftc7"),
+"name": "Mines_Ground",
+"primitive": 3,
+"uv_scale": Vector4(2.03602, 2.0407202, 0, 0),
+"vertex_count": 60,
+"vertex_data": PackedByteArray("/dMBWkcEsteq7WvbBzYG0+obdqtqI4rXbjABWgAAdtf//wFaP85+0KTqdqs/zhzSqu1r2wc2NdPqG3araiN61+8BAVouA+7XbjABWgAAZtci+wAA/v/Cz6Tqdqs/zmPR//8BWj/O588E+wFaRwTp1arta9sHNgHT/dMBWkcErdcsI///l8mn1gAAAVpX+67UrwUBWpfJI9pySTX1a4Kv1pABAVpqIxDY6ht2q2ojjtf30AFa///R0qRtNfUkpHfUpOp2qz/OVtKkbTX1JKRm1Cwj//+XyUnXckk19WuCeNaq7WvbBzZC0/fQAVr//9XSpOp2qz/OZ9Ii+wAA/v/P0K83AVpX+6fSAAABWlf7L9UsI///l8kU15ABAVpqIwLY7wEBWi4D7tfqG3araiN31+D/AVoHNp7Pqu1r2wc2dtME+wFaRwRC1nJJNfVrgovVLCP//5fJf9avBQFal8k32q83AVpX+5/SLCP//5fJIdekbTX1JKRw1PfQAVr//8jS//8BWj/OjNCq7WvbBzZF0+D/AVoHNoPPpG019SSkadSq7WvbBzZJ06Tqdqs/zjPSqu1r2wc2NNNySTX1a4KI1uobdqtqI2/Xckk19WuCg9avBQFal8nJ2pABAVpqI+/X7tMELE7Rmyl71sIrGNTiK4XR3SfB0+soMdFaKYbW1SsK1iQsI9T3K0vU1Sgo1NEp19GkKIXSHytR0aIp8tMKLFfYpizs2F4rdtquLiPWLCuX2AUseda9K5TVCylt1RcqodOjKHfVLCrx1+srRdZtKyrRSSmR1QcpmNOPKMLTkSdJ1vAoo9jRKhLYKSyf2BQsCtYkLIfW2CvPzIcmCtECKUrSqCrb1owscNjULGjamC5N1vkoCtgaLHHVICqY1RYpftHLJyjRRSnfzLAmddUoKiXRPim1088oMtFcKTvWWiuN1uIrPtZgKwXa9C2r2Cks")
+}]
+blend_shape_mode = 0
+shadow_mesh = SubResource("ArrayMesh_7lmui")
+
+[sub_resource type="ConcavePolygonShape3D" id="ConcavePolygonShape3D_bpbu5"]
+data = PackedVector3Array(0.7055897, 0, -1.0354652, 0.9207561, 0.043154575, -0.6021321, -0.8369733, 0.027161874, -0.76425517, 1.0743607, 0, 0.72372377, 0.8954252, 0.027161874, 0.72372407, 0.9207561, 0.043154575, -0.6021321, -0.8369733, 0.027161874, -0.76425517, -1.0547051, -2.6077032e-08, -1.0450387, -0.66506034, 0, -1.0727545, 1.0336195, -0.03001432, 1.157057, 0.8954252, 0.027161874, 0.72372407, 1.0743607, 0, 0.72372377, 1.0326236, 0, -1.0354657, 0.9207561, 0.043154575, -0.6021321, 0.7055897, 0, -1.0354652, -0.77617556, 0.055351198, 0.6831942, -1.0709286, 0, 1.1165278, -1.0232686, 0, 0.68319446, -0.4554204, 0.051754314, 0.0632516, -1.057819, 0, -0.764255, -0.8369733, 0.027161874, -0.76425517, 0.68025947, 0, 1.1570575, -0.15210816, 0.051754314, 0.35699505, 0.8954252, 0.027161874, 0.72372407, -0.15210816, 0.051754314, 0.35699505, -0.77617556, 0.055351198, 0.6831942, -0.4554204, 0.051754314, 0.0632516, 0.68025947, 0, 1.1570575, 0.8954252, 0.027161874, 0.72372407, 1.0336195, -0.03001432, 1.157057, -0.60426193, 0, 1.1165274, -1.0709286, 0, 1.1165278, -0.77617556, 0.055351198, 0.6831942, -1.057819, 0, -0.764255, -1.0547051, -2.6077032e-08, -1.0450387, -0.8369733, 0.027161874, -0.76425517, 1.0733653, 1.8626451e-09, -0.6021323, 0.9207561, 0.043154575, -0.6021321, 1.0326236, 0, -1.0354657, 0.9207561, 0.043154575, -0.6021321, -0.15210816, 0.051754314, 0.35699505, -0.4554204, 0.051754314, 0.0632516, -0.4554204, 0.051754314, 0.0632516, -0.77617556, 0.055351198, 0.6831942, -1.0232686, 0, 0.68319446, -0.60426193, 0, 1.1165274, -0.77617556, 0.055351198, 0.6831942, -0.15210816, 0.051754314, 0.35699505, 0.7055897, 0, -1.0354652, -0.8369733, 0.027161874, -0.76425517, -0.66506034, 0, -1.0727545, 1.0743607, 0, 0.72372377, 0.9207561, 0.043154575, -0.6021321, 1.0733653, 1.8626451e-09, -0.6021323, -0.15210816, 0.051754314, 0.35699505, 0.9207561, 0.043154575, -0.6021321, 0.8954252, 0.027161874, 0.72372407, 0.9207561, 0.043154575, -0.6021321, -0.4554204, 0.051754314, 0.0632516, -0.8369733, 0.027161874, -0.76425517, -0.4554204, 0.051754314, 0.0632516, -1.0232686, 0, 0.68319446, -1.057819, 0, -0.764255, -0.60426193, 0, 1.1165274, -0.15210816, 0.051754314, 0.35699505, 0.68025947, 0, 1.1570575)
+
+[node name="Ground_Mines_D" type="MeshInstance3D" unique_id=640607662]
+mesh = SubResource("ArrayMesh_rf0gq")
+metadata/extras = {
+"M3": {},
+"oas_props": {}
+}
+
+[node name="Ground_Mines_D" type="StaticBody3D" parent="." unique_id=421632671]
+metadata/extras = {
+"M3": {},
+"oas_props": {}
+}
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Ground_Mines_D" unique_id=371987847]
+shape = SubResource("ConcavePolygonShape3D_bpbu5")

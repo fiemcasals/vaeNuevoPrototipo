@@ -1,0 +1,15 @@
+[gd_scene format=3 uid="uid://dje02j1872302"]
+
+[ext_resource type="PackedScene" uid="uid://ds6eahi4jw4vi" path="res://Modelos3D/Imports/KayKit_City_Builder_Bits_1.0_FREE/Assets/gltf/road_junction.gltf" id="1_nijoc"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_2k4jt"]
+size = Vector3(2, 0.2, 2)
+
+[node name="road_junction2" unique_id=103343678 groups=["road"] instance=ExtResource("1_nijoc")]
+
+[node name="StaticBody3D" type="StaticBody3D" parent="." index="1" unique_id=1677529246]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="StaticBody3D" index="0" unique_id=1357096763]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.014401674, 0)
+shape = SubResource("BoxShape3D_2k4jt")
+debug_color = Color(0.21144187, 0.6402233, 5.7756904e-07, 0.41960785)

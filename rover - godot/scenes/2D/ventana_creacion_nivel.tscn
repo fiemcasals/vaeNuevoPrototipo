@@ -1,0 +1,52 @@
+[gd_scene format=3 uid="uid://bhnvpcrqn6ydq"]
+
+[ext_resource type="Script" uid="uid://c2x2y4w12ouks" path="res://scripts/pencil_panel.gd" id="1_pekxn"]
+
+[node name="ventana_creacion_de_nivel" type="Control" unique_id=557938243]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_pekxn")
+
+[node name="GridContainer" type="GridContainer" parent="." unique_id=61112842]
+custom_minimum_size = Vector2(514, 134)
+layout_mode = 0
+offset_left = 536.0
+offset_top = 2.0
+offset_right = 1050.0
+offset_bottom = 136.0
+columns = 4
+
+[node name="ButtonsContainer" type="HBoxContainer" parent="." unique_id=61112843]
+custom_minimum_size = Vector2(-2.39, 0)
+layout_mode = 1
+anchors_preset = -1
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_top = -100.0
+offset_right = 404.0
+offset_bottom = -600.0
+
+[node name="Guardar" type="Button" parent="ButtonsContainer" unique_id=61112844]
+custom_minimum_size = Vector2(200, 48)
+layout_mode = 2
+text = "Guardar"
+
+[node name="CargarGrilla" type="Button" parent="ButtonsContainer" unique_id=61112845]
+custom_minimum_size = Vector2(200, 48)
+layout_mode = 2
+text = "Cargar grilla"
+
+[node name="FileDialog" type="FileDialog" parent="." unique_id=1302911684]
+access = 2
+
+[node name="BtnVolverMenu" type="Button" parent="." unique_id=2000000001]
+layout_mode = 0
+offset_left = 10.0
+offset_top = 10.0
+offset_right = 160.0
+offset_bottom = 50.0
+text = "Volver al Menú"

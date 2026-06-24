@@ -1,0 +1,7 @@
+[gd_scene format=3 uid="uid://d123qjq3truf1"]
+
+[ext_resource type="PackedScene" uid="uid://bdc306muho5ux" path="res://PruebaWebSocket.tscn" id="1_wwird"]
+
+[node name="Canvas" type="CanvasLayer" unique_id=1212981173]
+
+[node name="PruebaWebSocket" parent="." unique_id=2124956854 instance=ExtResource("1_wwird")]

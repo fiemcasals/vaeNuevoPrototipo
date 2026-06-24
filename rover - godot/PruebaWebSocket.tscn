@@ -1,0 +1,130 @@
+[gd_scene format=3 uid="uid://bdc306muho5ux"]
+
+[ext_resource type="Script" uid="uid://dupwlrap10os2" path="res://ControlRemotoAlESP.gd" id="1_ctrl"]
+[ext_resource type="Script" uid="uid://coo8ekm1xm5nr" path="res://JoystickVirtual.gd" id="2_joy"]
+[ext_resource type="Shader" uid="uid://c8oe43w083t6u" path="res://circle.gdshader" id="3_circ"]
+
+[sub_resource type="ShaderMaterial" id="mat_circle"]
+shader = ExtResource("3_circ")
+
+[node name="PruebaWebSocket" type="Control" unique_id=2124956854]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_ctrl")
+
+[node name="Panel" type="Panel" parent="." unique_id=1001]
+layout_mode = 1
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = 8.0
+offset_top = 8.0
+offset_right = -8.0
+offset_bottom = 175.0
+grow_horizontal = 0
+
+[node name="MarginContainer" type="MarginContainer" parent="Panel" unique_id=1002]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -681.0
+offset_right = -447.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 12
+theme_override_constants/margin_top = 8
+theme_override_constants/margin_right = 12
+theme_override_constants/margin_bottom = 8
+
+[node name="VBoxContainer" type="VBoxContainer" parent="Panel/MarginContainer" unique_id=1003]
+layout_mode = 2
+
+[node name="Titulo" type="Label" parent="Panel/MarginContainer/VBoxContainer" unique_id=1004]
+layout_mode = 2
+text = "Control Remoto ESP32"
+horizontal_alignment = 1
+
+[node name="HBoxIP" type="HBoxContainer" parent="Panel/MarginContainer/VBoxContainer" unique_id=1005]
+layout_mode = 2
+
+[node name="LabelIP" type="Label" parent="Panel/MarginContainer/VBoxContainer/HBoxIP" unique_id=1006]
+layout_mode = 2
+text = "IP:"
+
+[node name="LineEditIP" type="LineEdit" parent="Panel/MarginContainer/VBoxContainer/HBoxIP" unique_id=1007]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "ws://10.24.206.226:81"
+placeholder_text = "ws://10.24.206.226:81"
+
+[node name="HBoxBotones" type="HBoxContainer" parent="Panel/MarginContainer/VBoxContainer" unique_id=1008]
+layout_mode = 2
+
+[node name="BtnConectar" type="Button" parent="Panel/MarginContainer/VBoxContainer/HBoxBotones" unique_id=1009]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Conectar"
+
+[node name="BtnDesconectar" type="Button" parent="Panel/MarginContainer/VBoxContainer/HBoxBotones" unique_id=1010]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Desconectar"
+
+[node name="BtnAccion" type="Button" parent="Panel/MarginContainer/VBoxContainer/HBoxBotones" unique_id=1011]
+layout_mode = 2
+text = "A"
+
+[node name="LabelEstado" type="Label" parent="Panel/MarginContainer/VBoxContainer" unique_id=1012]
+layout_mode = 2
+text = "Desconectado"
+horizontal_alignment = 1
+
+[node name="JoystickArea" type="Control" parent="." unique_id=2001]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = 185.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 1
+script = ExtResource("2_joy")
+
+[node name="Aro" type="ColorRect" parent="JoystickArea" unique_id=3001]
+material = SubResource("mat_circle")
+layout_mode = 0
+color = Color(0.4, 0.4, 0.4, 0.5)
+
+[node name="Base" type="ColorRect" parent="JoystickArea" unique_id=3002]
+material = SubResource("mat_circle")
+layout_mode = 0
+color = Color(0.15, 0.15, 0.15, 0.75)
+
+[node name="EjeH" type="ColorRect" parent="JoystickArea" unique_id=3003]
+layout_mode = 0
+color = Color(1, 1, 1, 0.08)
+
+[node name="EjeV" type="ColorRect" parent="JoystickArea" unique_id=3004]
+layout_mode = 0
+color = Color(1, 1, 1, 0.08)
+
+[node name="Thumb" type="ColorRect" parent="JoystickArea" unique_id=3005]
+material = SubResource("mat_circle")
+layout_mode = 0
+color = Color(0.2, 0.5, 0.85, 0.7)
+
+[node name="CruzH" type="ColorRect" parent="JoystickArea/Thumb" unique_id=3006]
+layout_mode = 0
+color = Color(1, 1, 1, 0.4)
+
+[node name="CruzV" type="ColorRect" parent="JoystickArea/Thumb" unique_id=3007]
+layout_mode = 0
+color = Color(1, 1, 1, 0.4)
+
+[node name="TimerReconexion" type="Timer" parent="." unique_id=623741363]
+wait_time = 3.0

@@ -1,0 +1,53 @@
+[gd_scene format=3 uid="uid://dlyqiw2y1vv28"]
+
+[ext_resource type="ArrayMesh" uid="uid://ddythyj1yo4cj" path="res://Modelos3D/Imports/KayKit_City_Builder_Bits_1.0_FREE/Assets/obj/car_sedan.obj" id="1_eo4ah"]
+[ext_resource type="Script" uid="uid://b3p4xncrcmnwg" path="res://scripts/vehicle/vehicle.gd" id="2_dn4nt"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_eo4ah"]
+size = Vector3(1, 0.30810547, 0.91503906)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_dn4nt"]
+
+[sub_resource type="BoxMesh" id="BoxMesh_tibls"]
+
+[node name="Vehicletestdata" type="Node3D" unique_id=902682170]
+
+[node name="VehicleBody3D" type="VehicleBody3D" parent="." unique_id=1192503661]
+gravity_scale = 0.0
+script = ExtResource("2_dn4nt")
+escala_posicion = 1000.0
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="VehicleBody3D" unique_id=97046460]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.15307617, 0.0034179688)
+shape = SubResource("BoxShape3D_eo4ah")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="VehicleBody3D" unique_id=850650225]
+transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 0, 0, 0)
+mesh = ExtResource("1_eo4ah")
+
+[node name="VehicleWheel3D" type="VehicleWheel3D" parent="VehicleBody3D" unique_id=806726161]
+transform = Transform3D(1, 0, 0, 0, 0.19999999, 0, 0, 0, 0.19999999, 0.20270997, 0.0045655966, 0.24654019)
+
+[node name="VehicleWheel3D2" type="VehicleWheel3D" parent="VehicleBody3D" unique_id=861485416]
+transform = Transform3D(1, 0, 0, 0, 0.19999999, 0, 0, 0, 0.19999999, 0.20270997, 0.0045655966, -0.25407124)
+
+[node name="VehicleWheel3D3" type="VehicleWheel3D" parent="VehicleBody3D" unique_id=633051932]
+transform = Transform3D(1, 0, 0, 0, 0.19999999, 0, 0, 0, 0.19999999, -0.2058348, 0.0045655966, 0.24654019)
+
+[node name="VehicleWheel3D4" type="VehicleWheel3D" parent="VehicleBody3D" unique_id=665074221]
+transform = Transform3D(1, 0, 0, 0, 0.19999999, 0, 0, 0, 0.19999999, -0.2058348, 0.0045655966, -0.25407124)
+
+[node name="Camera3D" type="Camera3D" parent="." unique_id=1354210118]
+transform = Transform3D(1, 0, 0, 0, 0.25213695, 0.9676916, 0, -0.9676916, 0.25213695, 0, 8.577978, -1.5143139)
+
+[node name="StaticBody3D" type="StaticBody3D" parent="." unique_id=2822309]
+transform = Transform3D(10, 0, 0, 0, 10, 0, 0, 0, 10, 0, -6.4146023, 0)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="StaticBody3D" unique_id=1828353700]
+shape = SubResource("BoxShape3D_dn4nt")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="StaticBody3D" unique_id=2095275368]
+mesh = SubResource("BoxMesh_tibls")
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="." unique_id=1187859371]
+transform = Transform3D(1, 0, 0, 0, 0.9616456, 0.2742949, 0, -0.2742949, 0.9616456, 0, 0, 3.6082513)

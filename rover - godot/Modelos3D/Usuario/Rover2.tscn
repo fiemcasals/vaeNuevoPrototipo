@@ -1,0 +1,187 @@
+[gd_scene format=3 uid="uid://c6dybhv4bqb1y"]
+
+[ext_resource type="Script" uid="uid://osne2eikfuw" path="res://Modelos3D/Usuario/rover_2.gd" id="1_mcu0b"]
+[ext_resource type="Script" uid="uid://dk4dkdr6mdflg" path="res://Modelos3D/Usuario/fpv.gd" id="2_g1q2u"]
+[ext_resource type="Texture2D" uid="uid://d2it0pkn27v2m" path="res://Imagenes2D/speedometer1.png" id="3_s7n2j"]
+[ext_resource type="Texture2D" uid="uid://doapm38o5cblq" path="res://Imagenes2D/needlelong2.png" id="4_4wdio"]
+[ext_resource type="Script" uid="uid://dnvr8et4cmqu8" path="res://scenes/2D/velocimetro.gd" id="5_x1rpy"]
+
+[sub_resource type="PhysicsMaterial" id="PhysicsMaterial_mcu0b"]
+rough = true
+absorbent = true
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_jfj6g"]
+albedo_color = Color(7.219613e-08, 0.22970068, 0.024195304, 1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_dhba0"]
+material = SubResource("StandardMaterial3D_jfj6g")
+size = Vector3(2, 1, 1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_mcu0b"]
+material = SubResource("StandardMaterial3D_jfj6g")
+size = Vector3(1.665, 1, 1.15)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_d4gi6"]
+albedo_color = Color(0.2275033, 0.15453833, 0.5098494, 1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_g1q2u"]
+material = SubResource("StandardMaterial3D_d4gi6")
+size = Vector3(0.2, 0.5, 0.2)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_ynrkk"]
+size = Vector3(0.8, 0.3055664, 0.6)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_44p52"]
+albedo_color = Color(0.0142752165, 0.014275218, 0.014275218, 1)
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_dhba0"]
+material = SubResource("StandardMaterial3D_44p52")
+top_radius = 0.25
+bottom_radius = 0.25
+height = 0.2
+radial_segments = 16
+
+[node name="VehicleBody3D" type="VehicleBody3D" unique_id=1910257465 node_paths=PackedStringArray("r_trasera_iz", "r_trasera_der")]
+collision_layer = 2
+mass = 500.0
+physics_material_override = SubResource("PhysicsMaterial_mcu0b")
+script = ExtResource("1_mcu0b")
+brake_force = 15.0
+steer_speed = 1.0
+deadzone = 0.01
+r_trasera_iz = NodePath("VehicleWheel3D3")
+r_trasera_der = NodePath("VehicleWheel3D4")
+
+[node name="Body" type="CSGMesh3D" parent="." unique_id=1314964540]
+transform = Transform3D(3.774895e-08, 0, -0.5, 0, 0.5, 0, 0.5, 0, 3.774895e-08, -0.08409062, 0, 0.069237135)
+mesh = SubResource("BoxMesh_dhba0")
+
+[node name="Corte" type="CSGMesh3D" parent="Body" unique_id=2082871924]
+transform = Transform3D(0.9570112, 0.29005083, 0, -0.29005083, 0.9570112, 0, 0, 0, 1, 0.8294909, 0.8499547, 0)
+operation = 2
+mesh = SubResource("BoxMesh_mcu0b")
+
+[node name="Corte2" type="CSGMesh3D" parent="Body" unique_id=150531911]
+transform = Transform3D(0.9740392, 0.22637933, 8.742278e-08, 0.22637933, -0.9740392, -8.723289e-08, 6.540549e-08, 1.0475897e-07, -1, 0.8294909, -0.667747, 0)
+operation = 2
+mesh = SubResource("BoxMesh_mcu0b")
+
+[node name="Corte3" type="CSGMesh3D" parent="Body" unique_id=252522016]
+transform = Transform3D(0.9994725, 0.032474916, 8.742278e-08, 0.032474916, -0.9994725, -8.4443926e-08, 8.463435e-08, 8.7238426e-08, -1, -0.42260408, -0.7853586, 0)
+operation = 2
+mesh = SubResource("BoxMesh_mcu0b")
+
+[node name="Cam" type="CSGMesh3D" parent="Body" unique_id=1315284271]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.6056603, 0.42724395, 0)
+mesh = SubResource("BoxMesh_g1q2u")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=1360775135]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, -0.08294497, 0.014065258, 0.070060134)
+shape = SubResource("BoxShape3D_ynrkk")
+debug_color = Color(0, 0.6, 0.69803923, 1)
+
+[node name="VehicleWheel3D" type="VehicleWheel3D" parent="." unique_id=2015827466]
+transform = Transform3D(0.7, 0, 0, 0, 0.7, 0, 0, 0, 0.7, 0.18686724, -0.053369865, 0.32870197)
+use_as_steering = true
+wheel_radius = 0.2
+wheel_rest_length = 0.2
+wheel_friction_slip = 20.0
+suspension_travel = 0.1
+suspension_stiffness = 100.0
+damping_compression = 10.0
+damping_relaxation = 15.0
+
+[node name="Wheel" type="CSGMesh3D" parent="VehicleWheel3D" unique_id=1982260602]
+transform = Transform3D(5.284853e-08, -0.7, 3.059797e-08, 0, -3.059797e-08, -0.7, 0.7, 5.284853e-08, -2.3100827e-15, 0, 0, 0)
+mesh = SubResource("CylinderMesh_dhba0")
+
+[node name="VehicleWheel3D2" type="VehicleWheel3D" parent="." unique_id=981563616]
+transform = Transform3D(0.7, 0, 0, 0, 0.7, 0, 0, 0, 0.7, -0.3580386, -0.053369865, 0.32870197)
+use_as_steering = true
+wheel_radius = 0.2
+wheel_rest_length = 0.2
+wheel_friction_slip = 20.0
+suspension_travel = 0.1
+suspension_stiffness = 100.0
+damping_compression = 10.0
+damping_relaxation = 15.0
+
+[node name="Wheel" type="CSGMesh3D" parent="VehicleWheel3D2" unique_id=1789964238]
+transform = Transform3D(5.284853e-08, -0.7, 3.059797e-08, 0, -3.059797e-08, -0.7, 0.7, 5.284853e-08, -2.3100827e-15, 0, 0, 0)
+mesh = SubResource("CylinderMesh_dhba0")
+
+[node name="VehicleWheel3D3" type="VehicleWheel3D" parent="." unique_id=203547573]
+transform = Transform3D(0.7, 0, 0, 0, 0.7, 0, 0, 0, 0.7, -0.3580386, -0.053369865, -0.18880065)
+use_as_traction = true
+wheel_radius = 0.2
+wheel_rest_length = 0.2
+wheel_friction_slip = 20.0
+suspension_travel = 0.1
+suspension_stiffness = 100.0
+damping_compression = 10.0
+damping_relaxation = 15.0
+
+[node name="Wheel" type="CSGMesh3D" parent="VehicleWheel3D3" unique_id=1398225207]
+transform = Transform3D(5.284853e-08, -0.7, 3.059797e-08, 0, -3.059797e-08, -0.7, 0.7, 5.284853e-08, -2.3100827e-15, 0, 0, 0)
+mesh = SubResource("CylinderMesh_dhba0")
+
+[node name="VehicleWheel3D4" type="VehicleWheel3D" parent="." unique_id=1776116105]
+transform = Transform3D(0.7, 0, 0, 0, 0.7, 0, 0, 0, 0.7, 0.18686724, -0.053369865, -0.18880065)
+use_as_traction = true
+wheel_radius = 0.2
+wheel_rest_length = 0.2
+wheel_friction_slip = 20.0
+suspension_travel = 0.1
+suspension_stiffness = 100.0
+damping_compression = 10.0
+damping_relaxation = 15.0
+
+[node name="Wheel" type="CSGMesh3D" parent="VehicleWheel3D4" unique_id=2036015867]
+transform = Transform3D(5.284853e-08, -0.7, 3.059797e-08, 0, -3.059797e-08, -0.7, 0.7, 5.284853e-08, -2.3100827e-15, 0, 0, 0)
+mesh = SubResource("CylinderMesh_dhba0")
+
+[node name="FPV" type="Camera3D" parent="." unique_id=771052055]
+transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, -0.088043764, 0.23875484, 0.4227088)
+script = ExtResource("2_g1q2u")
+
+[node name="CanvasLayer" type="CanvasLayer" parent="." unique_id=1979572544]
+
+[node name="Fondo" type="TextureRect" parent="CanvasLayer" unique_id=2013901491]
+offset_right = 40.0
+offset_bottom = 40.0
+scale = Vector2(0.2, 0.2)
+texture = ExtResource("3_s7n2j")
+
+[node name="ColorRect" type="ColorRect" parent="CanvasLayer/Fondo" unique_id=452192039]
+layout_mode = 0
+offset_left = 487.0
+offset_top = 374.0
+offset_right = 1177.0
+offset_bottom = 728.9999
+scale = Vector2(0.2, 0.2)
+color = Color(0.14299253, 0.14299244, 0.14666617, 1)
+
+[node name="RichTextLabel" type="RichTextLabel" parent="CanvasLayer" unique_id=1786121515]
+offset_left = 75.0
+offset_top = 168.0
+offset_right = 146.0
+offset_bottom = 188.0
+bbcode_enabled = true
+text = "[center][b]0"
+scroll_active = false
+
+[node name="Aguja" type="TextureRect" parent="CanvasLayer" unique_id=1007694936 node_paths=PackedStringArray("vehicle", "Visor_Vel")]
+offset_left = 91.0
+offset_top = -335.00003
+offset_right = 131.0
+offset_bottom = 111.99997
+rotation = 2.0943952
+scale = Vector2(0.2, 0.2)
+pivot_offset = Vector2(20, 447)
+texture = ExtResource("4_4wdio")
+script = ExtResource("5_x1rpy")
+vehicle = NodePath("../..")
+min_angle = 120.0
+max_angle = -120.0
+max_speed = 220.0
+Visor_Vel = NodePath("../RichTextLabel")

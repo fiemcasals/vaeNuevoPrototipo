@@ -1,0 +1,10 @@
+[gd_scene format=3 uid="uid://dh28uypqv6yfi"]
+
+[ext_resource type="PackedScene" uid="uid://dtykbxmhjaqix" path="res://KayKit_City_Builder_Bits_1.0_FREE/Assets/gltf/firehydrant.gltf" id="1_3jtv4"]
+
+[node name="firehydrant2" unique_id=1628519661 instance=ExtResource("1_3jtv4")]
+
+[node name="NavigationObstacle3D" type="NavigationObstacle3D" parent="." index="3" unique_id=1529182266]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.048562735, 0)
+radius = 0.1
+affect_navigation_mesh = true

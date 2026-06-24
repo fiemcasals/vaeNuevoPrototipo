@@ -1,0 +1,10 @@
+# Godot 4+ specific ignores
+.godot/
+/android/
+/Builds
+.vscode/settings.json
+# Godot generated files
+*.import
+.godot/
+/Data
+.vscode/launch.json

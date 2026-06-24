@@ -1,0 +1,38 @@
+[gd_scene format=3 uid="uid://cwhow7yo74317"]
+
+[ext_resource type="Script" uid="uid://dnvr8et4cmqu8" path="res://scenes/2D/velocimetro.gd" id="1_80sj4"]
+[ext_resource type="Texture2D" uid="uid://d2it0pkn27v2m" path="res://Imagenes2D/speedometer1.png" id="1_0285k"]
+[ext_resource type="Texture2D" uid="uid://doapm38o5cblq" path="res://Imagenes2D/needlelong2.png" id="2_80sj4"]
+
+[node name="Velocimetro" type="Control" unique_id=668532805]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Fondo" type="TextureRect" parent="." unique_id=1962991639]
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 40.0
+texture = ExtResource("1_0285k")
+
+[node name="ColorRect" type="ColorRect" parent="Fondo" unique_id=326274]
+layout_mode = 0
+offset_left = 487.0
+offset_top = 374.0
+offset_right = 628.0
+offset_bottom = 447.0
+color = Color(0.14299253, 0.14299244, 0.14666617, 1)
+
+[node name="Aguja" type="TextureRect" parent="." unique_id=2032829221]
+layout_mode = 0
+offset_left = 530.0
+offset_top = 125.0
+offset_right = 570.0
+offset_bottom = 572.0
+rotation = -4.1905804
+pivot_offset = Vector2(20, 447)
+texture = ExtResource("2_80sj4")
+script = ExtResource("1_80sj4")

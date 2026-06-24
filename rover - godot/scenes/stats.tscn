@@ -1,0 +1,241 @@
+[gd_scene format=3 uid="uid://cstats001"]
+
+[ext_resource type="Script" path="res://scripts/stats.gd" id="1_script"]
+
+[node name="Stats" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_script")
+
+[node name="ColorRect" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.15, 0.15, 0.2, 1)
+
+[node name="ScrollContainer" type="ScrollContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="VBoxContainer" type="VBoxContainer" parent="ScrollContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_constants/separation = 15
+
+[node name="Titulo" type="Label" parent="ScrollContainer/VBoxContainer"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 32
+text = "Configuración del Rover"
+horizontal_alignment = 1
+
+[node name="Spacer" type="Control" parent="ScrollContainer/VBoxContainer"]
+custom_minimum_size = Vector2(0, 10)
+layout_mode = 2
+
+[node name="PesoContainer" type="HBoxContainer" parent="ScrollContainer/VBoxContainer"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="Label" type="Label" parent="ScrollContainer/VBoxContainer/PesoContainer"]
+layout_mode = 2
+custom_minimum_size = Vector2(300, 0)
+theme_override_font_sizes/font_size = 18
+text = "Peso del Rover (kg):"
+
+[node name="SpinBox" type="SpinBox" parent="ScrollContainer/VBoxContainer/PesoContainer"]
+custom_minimum_size = Vector2(150, 0)
+layout_mode = 2
+min_value = 100.0
+max_value = 2000.0
+step = 10.0
+value = 500.0
+
+[node name="VelocidadContainer" type="HBoxContainer" parent="ScrollContainer/VBoxContainer"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="Label" type="Label" parent="ScrollContainer/VBoxContainer/VelocidadContainer"]
+layout_mode = 2
+custom_minimum_size = Vector2(300, 0)
+theme_override_font_sizes/font_size = 18
+text = "Velocidad Máxima (km/h):"
+
+[node name="SpinBox" type="SpinBox" parent="ScrollContainer/VBoxContainer/VelocidadContainer"]
+custom_minimum_size = Vector2(150, 0)
+layout_mode = 2
+min_value = 10.0
+max_value = 200.0
+step = 5.0
+value = 50.0
+
+[node name="AceleracionContainer" type="HBoxContainer" parent="ScrollContainer/VBoxContainer"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="Label" type="Label" parent="ScrollContainer/VBoxContainer/AceleracionContainer"]
+layout_mode = 2
+custom_minimum_size = Vector2(300, 0)
+theme_override_font_sizes/font_size = 18
+text = "Aceleración:"
+
+[node name="SpinBox" type="SpinBox" parent="ScrollContainer/VBoxContainer/AceleracionContainer"]
+custom_minimum_size = Vector2(150, 0)
+layout_mode = 2
+min_value = 50.0
+max_value = 1000.0
+step = 10.0
+value = 300.0
+
+[node name="TorqueContainer" type="HBoxContainer" parent="ScrollContainer/VBoxContainer"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="Label" type="Label" parent="ScrollContainer/VBoxContainer/TorqueContainer"]
+layout_mode = 2
+custom_minimum_size = Vector2(300, 0)
+theme_override_font_sizes/font_size = 18
+text = "Fuerza de Torque:"
+
+[node name="SpinBox" type="SpinBox" parent="ScrollContainer/VBoxContainer/TorqueContainer"]
+custom_minimum_size = Vector2(150, 0)
+layout_mode = 2
+min_value = 50.0
+max_value = 1000.0
+step = 10.0
+value = 300.0
+
+[node name="AnchoContainer" type="HBoxContainer" parent="ScrollContainer/VBoxContainer"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="Label" type="Label" parent="ScrollContainer/VBoxContainer/AnchoContainer"]
+layout_mode = 2
+custom_minimum_size = Vector2(300, 0)
+theme_override_font_sizes/font_size = 18
+text = "Ancho del Vehículo (m):"
+
+[node name="SpinBox" type="SpinBox" parent="ScrollContainer/VBoxContainer/AnchoContainer"]
+custom_minimum_size = Vector2(150, 0)
+layout_mode = 2
+min_value = 0.5
+max_value = 5.0
+step = 0.1
+value = 2.0
+
+[node name="LargoContainer" type="HBoxContainer" parent="ScrollContainer/VBoxContainer"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="Label" type="Label" parent="ScrollContainer/VBoxContainer/LargoContainer"]
+layout_mode = 2
+custom_minimum_size = Vector2(300, 0)
+theme_override_font_sizes/font_size = 18
+text = "Largo del Vehículo (m):"
+
+[node name="SpinBox" type="SpinBox" parent="ScrollContainer/VBoxContainer/LargoContainer"]
+custom_minimum_size = Vector2(150, 0)
+layout_mode = 2
+min_value = 1.0
+max_value = 10.0
+step = 0.1
+value = 3.0
+
+[node name="AnchoRuedasContainer" type="HBoxContainer" parent="ScrollContainer/VBoxContainer"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="Label" type="Label" parent="ScrollContainer/VBoxContainer/AnchoRuedasContainer"]
+layout_mode = 2
+custom_minimum_size = Vector2(300, 0)
+theme_override_font_sizes/font_size = 18
+text = "Ancho de las Ruedas (m):"
+
+[node name="SpinBox" type="SpinBox" parent="ScrollContainer/VBoxContainer/AnchoRuedasContainer"]
+custom_minimum_size = Vector2(150, 0)
+layout_mode = 2
+min_value = 0.1
+max_value = 1.0
+step = 0.05
+value = 0.2
+
+[node name="DistanciaEjesContainer" type="HBoxContainer" parent="ScrollContainer/VBoxContainer"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="Label" type="Label" parent="ScrollContainer/VBoxContainer/DistanciaEjesContainer"]
+layout_mode = 2
+custom_minimum_size = Vector2(300, 0)
+theme_override_font_sizes/font_size = 18
+text = "Distancia entre Ejes (m):"
+
+[node name="SpinBox" type="SpinBox" parent="ScrollContainer/VBoxContainer/DistanciaEjesContainer"]
+custom_minimum_size = Vector2(150, 0)
+layout_mode = 2
+min_value = 0.5
+max_value = 5.0
+step = 0.1
+value = 2.0
+
+[node name="DistanciaRuedasContainer" type="HBoxContainer" parent="ScrollContainer/VBoxContainer"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="Label" type="Label" parent="ScrollContainer/VBoxContainer/DistanciaRuedasContainer"]
+layout_mode = 2
+custom_minimum_size = Vector2(300, 0)
+theme_override_font_sizes/font_size = 18
+text = "Distancia entre Ruedas (m):"
+
+[node name="SpinBox" type="SpinBox" parent="ScrollContainer/VBoxContainer/DistanciaRuedasContainer"]
+custom_minimum_size = Vector2(150, 0)
+layout_mode = 2
+min_value = 0.5
+max_value = 5.0
+step = 0.1
+value = 1.5
+
+[node name="MargenContainer" type="HBoxContainer" parent="ScrollContainer/VBoxContainer"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="Label" type="Label" parent="ScrollContainer/VBoxContainer/MargenContainer"]
+layout_mode = 2
+custom_minimum_size = Vector2(300, 0)
+theme_override_font_sizes/font_size = 18
+text = "Margen de Seguridad (m):"
+
+[node name="SpinBox" type="SpinBox" parent="ScrollContainer/VBoxContainer/MargenContainer"]
+custom_minimum_size = Vector2(150, 0)
+layout_mode = 2
+min_value = 0.0
+max_value = 2.0
+step = 0.1
+value = 0.5
+
+[node name="Spacer2" type="Control" parent="ScrollContainer/VBoxContainer"]
+custom_minimum_size = Vector2(0, 20)
+layout_mode = 2
+
+[node name="BtnGuardar" type="Button" parent="ScrollContainer/VBoxContainer"]
+custom_minimum_size = Vector2(200, 50)
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+text = "Guardar"
+
+[node name="BtnVolver" type="Button" parent="ScrollContainer/VBoxContainer"]
+custom_minimum_size = Vector2(200, 50)
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+text = "Volver al Menú"

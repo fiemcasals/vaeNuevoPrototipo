@@ -1,0 +1,233 @@
+[gd_scene format=3 uid="uid://dmlim0ohbi7b5"]
+
+[ext_resource type="Script" uid="uid://koq4nwrm5ehx" path="res://scripts/rover_auto_controller.gd" id="1_auto_ctrl"]
+[ext_resource type="Script" uid="uid://cf4xlpxpral24" path="res://Modelos3D/Usuario/camera_3d.gd" id="1_cam_seguimiento"]
+[ext_resource type="Script" uid="uid://cpb4devun8apa" path="res://scripts/camara_superior.gd" id="1_cam_superior"]
+[ext_resource type="Script" uid="uid://b2geqymnq1suh" path="res://scripts/creador_de_lvl.gd" id="1_creador"]
+[ext_resource type="Script" uid="uid://du1n0kbkw6ehp" path="res://scripts/nivel_cargado.gd" id="1_nav"]
+[ext_resource type="Script" uid="uid://xi0otqwptoll" path="res://scripts/navigation_system.gd" id="1_navigation"]
+[ext_resource type="Script" uid="uid://ipsnmfnhuq6i" path="res://scripts/path_visualizer.gd" id="1_path_vis"]
+[ext_resource type="Script" uid="uid://dtchivloylr60" path="res://scripts/target_selector.gd" id="1_target_selector"]
+[ext_resource type="Script" path="res://scripts/camera_transparency.gd" id="1_cam_transparency"]
+[ext_resource type="ShaderMaterial" path="res://shaders/transparent_hole_material.tres" id="1_transparent_mat"]
+[ext_resource type="PackedScene" uid="uid://c6dybhv4bqb1y" path="res://Modelos3D/Usuario/Rover2.tscn" id="2_rover"]
+[ext_resource type="PackedScene" uid="uid://crtqig5l16ktu" path="res://Modelos3D/Roads/road.tscn" id="3_road"]
+[ext_resource type="PackedScene" uid="uid://80ks7b2a72xf" path="res://Modelos3D/Roads/cruce.tscn" id="4_cruce"]
+[ext_resource type="PackedScene" uid="uid://cg1yjt3cqfiwg" path="res://Modelos3D/Buildings/BaseCalle.tscn" id="5_basecalle"]
+[ext_resource type="PackedScene" path="res://Modelos3D/Buildings/casa1.tscn" id="6_casa1"]
+[ext_resource type="PackedScene" uid="uid://clhnwxhrf77mh" path="res://Modelos3D/Buildings/casa_2.tscn" id="7_casa2"]
+[ext_resource type="PackedScene" path="res://Modelos3D/Buildings/casa_3.tscn" id="8_casa3"]
+[ext_resource type="PackedScene" path="res://Modelos3D/Buildings/casa_4.tscn" id="9_casa4"]
+[ext_resource type="PackedScene" path="res://Modelos3D/Buildings/casa_5.tscn" id="10_casa5"]
+[ext_resource type="PackedScene" path="res://Modelos3D/Buildings/casa_6.tscn" id="11_casa6"]
+[ext_resource type="PackedScene" uid="uid://d1cxrjea2fvkv" path="res://Modelos3D/Buildings/casa_7.tscn" id="12_casa7"]
+[ext_resource type="PackedScene" uid="uid://c8be2qv8avhdo" path="res://Modelos3D/Buildings/casa_8.tscn" id="13_casa8"]
+
+[sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_1"]
+sky_horizon_color = Color(0.66, 0.67, 0.69, 1)
+ground_horizon_color = Color(0.66, 0.67, 0.69, 1)
+
+[sub_resource type="Sky" id="Sky_1"]
+sky_material = SubResource("ProceduralSkyMaterial_1")
+
+[sub_resource type="Environment" id="Environment_1"]
+background_mode = 2
+sky = SubResource("Sky_1")
+tonemap_mode = 2
+glow_enabled = true
+
+[sub_resource type="PhysicsMaterial" id="PhysicsMaterial_1"]
+rough = true
+absorbent = true
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_1"]
+size = Vector3(100, 0.5, 100)
+
+[node name="NivelCargado" type="Node3D" unique_id=277525354]
+script = ExtResource("1_nav")
+
+[node name="CreadorDeNivel" type="Node3D" parent="." unique_id=47352986]
+script = ExtResource("1_creador")
+tiles = Array[PackedScene]([ExtResource("3_road"), ExtResource("4_cruce"), ExtResource("5_basecalle"), ExtResource("6_casa1"), ExtResource("7_casa2"), ExtResource("8_casa3"), ExtResource("9_casa4"), ExtResource("10_casa5"), ExtResource("11_casa6"), ExtResource("12_casa7"), ExtResource("13_casa8")])
+rover_scene = ExtResource("2_rover")
+tile_spacing = 4.0
+rover_spawn_y = 0.38
+
+[node name="NavigationSystem" type="Node3D" parent="." unique_id=500000001]
+script = ExtResource("1_navigation")
+
+[node name="PathVisualizer" type="Node3D" parent="." unique_id=500000002]
+script = ExtResource("1_path_vis")
+
+[node name="RoverAutoController" type="Node" parent="." unique_id=500000003]
+script = ExtResource("1_auto_ctrl")
+
+[node name="CameraTransparency" type="Node3D" parent="." unique_id=500000009]
+script = ExtResource("1_cam_transparency")
+transparent_material = ExtResource("1_transparent_mat")
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=78775253]
+environment = SubResource("Environment_1")
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="." unique_id=1180334894]
+transform = Transform3D(-0.87, -0.43, 0.25, 0, 0.5, 0.87, -0.5, 0.75, -0.43, 0, 0, 0)
+shadow_enabled = true
+
+[node name="Piso" type="StaticBody3D" parent="." unique_id=1819597876]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.25, 0)
+physics_material_override = SubResource("PhysicsMaterial_1")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Piso" unique_id=1210678000]
+shape = SubResource("BoxShape3D_1")
+
+[node name="Camera3D" type="Camera3D" parent="." unique_id=1610551070]
+transform = Transform3D(1, 0, 0, 0, 0.7, 0.7, 0, -0.7, 0.7, 15, 12, 15)
+current = true
+script = ExtResource("1_cam_superior")
+offset = Vector3(0, 5, -5)
+
+[node name="CamaraSeguimiento" type="Camera3D" parent="." unique_id=750659299]
+transform = Transform3D(-1, 0, -8.742278e-08, -2.1832776e-08, 0.9683135, 0.24973784, 8.4652655e-08, 0.24973784, -0.9683135, 0, 0.5871639, -1.5396068)
+script = ExtResource("1_cam_seguimiento")
+
+[node name="UIOverlay" type="CanvasLayer" parent="." unique_id=349685621]
+
+[node name="BtnVolverMenu" type="Button" parent="UIOverlay" unique_id=1674009146]
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -210.0
+offset_top = 10.0
+offset_right = -10.0
+offset_bottom = 50.0
+grow_horizontal = 0
+text = "Volver al Menú"
+
+[node name="BtnCargarNivel" type="Button" parent="UIOverlay" unique_id=398196100]
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -210.0
+offset_top = 60.0
+offset_right = -10.0
+offset_bottom = 100.0
+grow_horizontal = 0
+text = "Cargar Nivel"
+
+[node name="BtnCambiarCamara" type="Button" parent="UIOverlay" unique_id=2074007803]
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -210.0
+offset_top = 110.0
+offset_right = -10.0
+offset_bottom = 150.0
+grow_horizontal = 0
+text = "Cambiar Cámara"
+
+[node name="BtnNavegar" type="Button" parent="UIOverlay" unique_id=500000004]
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -210.0
+offset_top = 160.0
+offset_right = -10.0
+offset_bottom = 200.0
+grow_horizontal = 0
+text = "Seleccionar Destino"
+
+[node name="BtnIrSpawn" type="Button" parent="UIOverlay" unique_id=500000005]
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -210.0
+offset_top = 210.0
+offset_right = -10.0
+offset_bottom = 250.0
+grow_horizontal = 0
+text = "Ir al Spawn"
+
+[node name="BtnReaparecer" type="Button" parent="UIOverlay" unique_id=500000007]
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -210.0
+offset_top = 260.0
+offset_right = -10.0
+offset_bottom = 300.0
+grow_horizontal = 0
+text = "Reaparecer en Spawn"
+
+[node name="BtnVoltear" type="Button" parent="UIOverlay" unique_id=500000008]
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -210.0
+offset_top = 310.0
+offset_right = -10.0
+offset_bottom = 350.0
+grow_horizontal = 0
+text = "Voltear Rover"
+
+[node name="FileDialog" type="FileDialog" parent="UIOverlay" unique_id=862199641]
+access = 2
+filters = PackedStringArray("*.json ; JSON Files")
+
+[node name="TargetSelector" type="Control" parent="UIOverlay" unique_id=1190014925]
+visible = false
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_target_selector")
+
+[node name="ColorOverlay" type="ColorRect" parent="UIOverlay/TargetSelector" unique_id=1234419448]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0, 0, 0, 0.5)
+
+[node name="PanelContainer" type="PanelContainer" parent="UIOverlay/TargetSelector" unique_id=698228143]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -200.0
+offset_top = -200.0
+offset_right = 200.0
+offset_bottom = 200.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="VBoxContainer" type="VBoxContainer" parent="UIOverlay/TargetSelector/PanelContainer" unique_id=2118284418]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="Title" type="Label" parent="UIOverlay/TargetSelector/PanelContainer/VBoxContainer" unique_id=604966334]
+layout_mode = 2
+text = "Seleccionar Destino"
+horizontal_alignment = 1
+
+[node name="HSeparator" type="HSeparator" parent="UIOverlay/TargetSelector/PanelContainer/VBoxContainer" unique_id=2106863826]
+layout_mode = 2
+
+[node name="ScrollContainer" type="ScrollContainer" parent="UIOverlay/TargetSelector/PanelContainer/VBoxContainer" unique_id=415360140]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="ListContainer" type="VBoxContainer" parent="UIOverlay/TargetSelector/PanelContainer/VBoxContainer/ScrollContainer" unique_id=1692295561]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 5
+
+[node name="CancelButton" type="Button" parent="UIOverlay/TargetSelector/PanelContainer/VBoxContainer" unique_id=539876180]
+custom_minimum_size = Vector2(0, 40)
+layout_mode = 2
+text = "Cancelar"

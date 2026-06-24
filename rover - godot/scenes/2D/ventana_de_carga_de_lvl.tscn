@@ -1,0 +1,30 @@
+[gd_scene format=3 uid="uid://2sxonq124mdi"]
+
+[ext_resource type="Script" uid="uid://dyx2kaacn6ipm" path="res://scripts/ventana_de_carga_de_lvl.gd" id="1_c5wdg"]
+
+[node name="VentanaDeCargaDeLVL" type="Control" unique_id=449130055]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_c5wdg")
+
+[node name="ButtonCargarNivel" type="Button" parent="." unique_id=1329922523]
+layout_mode = 0
+offset_left = 889.0
+offset_top = 482.0
+offset_right = 1149.0
+offset_bottom = 640.0
+text = "CARGAR NIVEL"
+
+[node name="FileDialog" type="FileDialog" parent="." unique_id=2054786143]
+
+[node name="BtnVolverMenu" type="Button" parent="." unique_id=2000000002]
+layout_mode = 0
+offset_left = 10.0
+offset_top = 10.0
+offset_right = 160.0
+offset_bottom = 50.0
+text = "Volver al Menú"

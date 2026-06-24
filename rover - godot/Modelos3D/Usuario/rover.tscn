@@ -1,0 +1,90 @@
+[gd_scene format=3 uid="uid://214tefdfo46y"]
+
+[ext_resource type="Script" uid="uid://d0g76oeqibgq1" path="res://Modelos3D/Usuario/rover.gd" id="1_fxoct"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_jfj6g"]
+albedo_color = Color(7.219613e-08, 0.22970068, 0.024195304, 1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_il8ej"]
+material = SubResource("StandardMaterial3D_jfj6g")
+size = Vector3(2, 1, 1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_8cnl3"]
+material = SubResource("StandardMaterial3D_jfj6g")
+size = Vector3(1.665, 1, 1.15)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_d4gi6"]
+albedo_color = Color(0.2275033, 0.15453833, 0.5098494, 1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_7ff10"]
+material = SubResource("StandardMaterial3D_d4gi6")
+size = Vector3(0.2, 0.5, 0.2)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_44p52"]
+albedo_color = Color(0.0142752165, 0.014275218, 0.014275218, 1)
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_ahhn0"]
+material = SubResource("StandardMaterial3D_44p52")
+top_radius = 0.25
+bottom_radius = 0.25
+height = 0.2
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_6ij1e"]
+size = Vector3(2.262146, 1, 1)
+
+[node name="Rover" type="CharacterBody3D" unique_id=718380364 node_paths=PackedStringArray("Navigator")]
+script = ExtResource("1_fxoct")
+Navigator = NodePath("NavigationAgent3D")
+
+[node name="Body" type="CSGMesh3D" parent="." unique_id=1827854974]
+transform = Transform3D(1.3113416e-07, 0, -1, 0, 1, 0, 1, 0, 1.3113416e-07, -0.08409062, 0, 0.069237135)
+mesh = SubResource("BoxMesh_il8ej")
+
+[node name="Corte" type="CSGMesh3D" parent="Body" unique_id=252373135]
+transform = Transform3D(0.9570112, 0.29005083, 0, -0.29005083, 0.9570112, 0, 0, 0, 1, 0.8294909, 0.8499547, 0)
+operation = 2
+mesh = SubResource("BoxMesh_8cnl3")
+
+[node name="Corte2" type="CSGMesh3D" parent="Body" unique_id=708728061]
+transform = Transform3D(0.9740392, 0.22637933, 8.742278e-08, 0.22637933, -0.9740392, -8.723289e-08, 6.540549e-08, 1.0475897e-07, -1, 0.8294909, -0.667747, 0)
+operation = 2
+mesh = SubResource("BoxMesh_8cnl3")
+
+[node name="Corte3" type="CSGMesh3D" parent="Body" unique_id=917409473]
+transform = Transform3D(0.9994725, 0.032474916, 8.742278e-08, 0.032474916, -0.9994725, -8.4443926e-08, 8.463435e-08, 8.7238426e-08, -1, -0.42260408, -0.7853586, 0)
+operation = 2
+mesh = SubResource("BoxMesh_8cnl3")
+
+[node name="Cam" type="CSGMesh3D" parent="Body" unique_id=380547876]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.6056603, 0.42724395, 0)
+mesh = SubResource("BoxMesh_7ff10")
+
+[node name="WheelPivot" type="Node3D" parent="." unique_id=991640259]
+
+[node name="Wheel" type="CSGMesh3D" parent="WheelPivot" unique_id=1525474112]
+transform = Transform3D(1.3113416e-07, -1, 4.371139e-08, 0, -4.371139e-08, -1, 1, 1.3113416e-07, -5.7320566e-15, -0.6332439, -0.31705812, 0.5878935)
+mesh = SubResource("CylinderMesh_ahhn0")
+
+[node name="Wheel4" type="CSGMesh3D" parent="WheelPivot" unique_id=1546544733]
+transform = Transform3D(1.3113416e-07, -1, 4.371139e-08, 0, -4.371139e-08, -1, 1, 1.3113416e-07, -5.7320566e-15, 0.47863346, -0.31705812, 0.58789337)
+mesh = SubResource("CylinderMesh_ahhn0")
+
+[node name="WheelPivot2" type="Node3D" parent="." unique_id=1813288594]
+
+[node name="Wheel2" type="CSGMesh3D" parent="WheelPivot2" unique_id=1097572177]
+transform = Transform3D(1.3113416e-07, -1, 4.371139e-08, 0, -4.371139e-08, -1, 1, 1.3113416e-07, -5.7320566e-15, -0.63324404, -0.31705812, -0.6410787)
+mesh = SubResource("CylinderMesh_ahhn0")
+
+[node name="Wheel3" type="CSGMesh3D" parent="WheelPivot2" unique_id=469452190]
+transform = Transform3D(1.3113416e-07, -1, 4.371139e-08, 0, -4.371139e-08, -1, 1, 1.3113416e-07, -5.7320566e-15, 0.48862582, -0.31705812, -0.6410788)
+mesh = SubResource("CylinderMesh_ahhn0")
+
+[node name="NavigationAgent3D" type="NavigationAgent3D" parent="." unique_id=1836442771]
+simplify_path = true
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=1675454068]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, -0.095062256, 0, 0)
+shape = SubResource("BoxShape3D_6ij1e")
+debug_color = Color(0, 0.6, 0.69803923, 1)
+
+[connection signal="navigation_finished" from="NavigationAgent3D" to="." method="_on_navigation_agent_3d_navigation_finished"]
