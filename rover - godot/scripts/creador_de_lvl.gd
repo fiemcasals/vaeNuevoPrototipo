@@ -212,8 +212,8 @@ func _generar_tiles_por_matriz(tile_rows) -> void:
 					_instanciar_tile(TILE_SCENE_INDEX["road"], x_index, z_index, 0.0, Color.WHITE, false)
 			else:
 				_instanciar_tile(TILE_SCENE_INDEX["basecalle"], x_index, z_index, 0.0, Color.WHITE, false)
-				var edificio_aleatorio = EDIFICIOS_INDICES[randi() % EDIFICIOS_INDICES.size()]
-				_instanciar_tile(edificio_aleatorio, x_index, z_index, 0.0, Color.WHITE, false, true)
+				var container_stack = _crear_contenedor_node(x_index, z_index)
+				current_level_root.add_child(container_stack)
 
 func _instanciar_tile(tile_value, x_index: int, z_index: int, rotacion_y: float = 0.0, color: Color = Color.WHITE, es_barro: bool = false, es_edificio: bool = false) -> void:
 	var resolved_id: int
@@ -404,3 +404,75 @@ func _limpiar_entorno() -> void:
 	for child in current_level_root.get_children():
 		child.queue_free()
 	current_level_root.get_children().clear()
+
+func _crear_contenedor_node(x_index: int, z_index: int) -> Node3D:
+	var container_stack = Node3D.new()
+	container_stack.name = "ContenedorStack_%d_%d" % [x_index, z_index]
+	container_stack.transform.origin = Vector3(x_index * tile_spacing, 0.0, z_index * tile_spacing)
+	
+	# Agregar al grupo de edificios para que la cámara con transparencia lo detecte
+	container_stack.add_to_group("buildings")
+	
+	# Cantidad de contenedores en la pila: entre 1 y 3
+	var stack_count = randi_range(1, 3)
+	
+	# Colores de puerto
+	var colors = [
+		Color(0.8, 0.15, 0.15), # Rojo
+		Color(0.15, 0.35, 0.8), # Azul
+		Color(0.15, 0.6, 0.25), # Verde
+		Color(0.85, 0.45, 0.1), # Naranja
+		Color(0.85, 0.75, 0.1)  # Amarillo
+	]
+	
+	# Rotación de la pila en múltiplos de 90 grados
+	var rot_y = (randi() % 4) * (PI / 2.0)
+	container_stack.rotation.y = rot_y
+	
+	var container_width = 1.8
+	var container_height = 1.8
+	var container_length = 3.6
+	
+	for h in range(stack_count):
+		var single_container = Node3D.new()
+		single_container.name = "Contenedor_%d" % h
+		
+		# Offset muy leve
+		var offset_x = randf_range(-0.05, 0.05)
+		var offset_z = randf_range(-0.05, 0.05)
+		var pos_y = h * container_height + (container_height / 2.0)
+		single_container.transform.origin = Vector3(offset_x, pos_y, offset_z)
+		
+		# Visualización
+		var mesh_instance = MeshInstance3D.new()
+		mesh_instance.name = "Mesh"
+		var box_mesh = BoxMesh.new()
+		box_mesh.size = Vector3(container_width, container_height, container_length)
+		mesh_instance.mesh = box_mesh
+		
+		var mat = StandardMaterial3D.new()
+		mat.albedo_color = colors[randi() % colors.size()]
+		mat.roughness = 0.4
+		mat.metallic = 0.7
+		
+		mesh_instance.set_surface_override_material(0, mat)
+		single_container.add_child(mesh_instance)
+		
+		# Colisión física
+		var static_body = StaticBody3D.new()
+		static_body.name = "StaticBody3D"
+		static_body.collision_layer = 1
+		static_body.collision_mask = 1
+		
+		var collision_shape = CollisionShape3D.new()
+		collision_shape.name = "CollisionShape3D"
+		var box_shape = BoxShape3D.new()
+		box_shape.size = Vector3(container_width, container_height, container_length)
+		collision_shape.shape = box_shape
+		
+		static_body.add_child(collision_shape)
+		single_container.add_child(static_body)
+		
+		container_stack.add_child(single_container)
+		
+	return container_stack

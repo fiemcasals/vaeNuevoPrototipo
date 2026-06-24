@@ -18,10 +18,16 @@ const MENU_PATH = "res://scenes/menu_principal.tscn"
 @onready var path_visualizer = $PathVisualizer
 @onready var auto_controller = $RoverAutoController
 @onready var camera_transparency = $CameraTransparency
+@onready var btn_test_aleatorio = $UIOverlay/BtnTestAleatorio
+@onready var spin_box_test = $UIOverlay/SpinBoxTest
 
 var camara_actual = 0
 var nivel_cargado = false
 var rotacion_original: Transform3D
+
+var test_mode_active: bool = false
+var test_destinations_remaining: int = 0
+var last_target_cell: Vector2i = Vector2i(-1, -1)
 
 func _ready() -> void:
 	btn_volver.pressed.connect(_volver_al_menu)
@@ -53,6 +59,31 @@ func _ready() -> void:
 	
 	btn_navegar.disabled = true
 	btn_ir_spawn.disabled = true
+	btn_test_aleatorio.disabled = true
+	
+	btn_test_aleatorio.pressed.connect(_on_test_aleatorio_presionado)
+	
+	auto_controller.navigation_stopped.connect(func():
+		if test_mode_active:
+			test_mode_active = false
+			test_destinations_remaining = 0
+			btn_test_aleatorio.text = "Test Aleatorio"
+			print("[Test] Prueba aleatoria cancelada por parada del piloto automático.")
+	)
+	
+	# Carga automática de nivel prueba1.json para agilizar las pruebas
+	_cargar_nivel_automatico.call_deferred()
+
+func _cargar_nivel_automatico() -> void:
+	var default_path = "res://prueba1.json"
+	if FileAccess.file_exists(default_path):
+		print("[Autoload] Cargando nivel automático: ", default_path)
+		_on_archivo_seleccionado(default_path)
+	else:
+		default_path = "prueba1.json"
+		if FileAccess.file_exists(default_path):
+			print("[Autoload] Cargando nivel automático: ", default_path)
+			_on_archivo_seleccionado(default_path)
 
 func _input(event: InputEvent) -> void:
 	if event.is_action_pressed("ui_cancel"):
@@ -107,6 +138,7 @@ func _on_rover_instanciado(_position: Vector3) -> void:
 		nivel_cargado = true
 		btn_navegar.disabled = false
 		btn_ir_spawn.disabled = false
+		btn_test_aleatorio.disabled = false
 
 func _get_level_tile_data() -> Array:
 	var tile_data = []
@@ -256,6 +288,17 @@ func _on_target_reached() -> void:
 	path_visualizer.clear()
 	btn_navegar.text = "Seleccionar Destino"
 	btn_ir_spawn.text = "Ir al Spawn"
+	
+	if test_mode_active:
+		test_destinations_remaining -= 1
+		if test_destinations_remaining > 0:
+			btn_test_aleatorio.text = "Detener Test (%d)" % test_destinations_remaining
+			print("[Test] Esperando 1.5s antes de reanudar...")
+			await get_tree().create_timer(1.5).timeout
+			if test_mode_active:
+				_ir_a_siguiente_destino_test()
+		else:
+			_stop_test_mode()
 
 func _on_cambiar_camara_presionado() -> void:
 	_cambiar_camara()
@@ -275,3 +318,85 @@ func _on_change_cam(cam: int) -> void:
 		camara_seguimiento.current = true
 		if camera_transparency:
 			camera_transparency.camera = camara_seguimiento
+
+func _on_test_aleatorio_presionado() -> void:
+	if not nivel_cargado or not creador or not creador.current_rover:
+		return
+		
+	if test_mode_active:
+		_stop_test_mode()
+		return
+		
+	var rover = creador.current_rover
+	var target_types = ["punto_interes", "objetivo"]
+	var targets = navigation.get_all_targets(rover.global_position, target_types)
+	
+	if targets.is_empty():
+		print("[Test] No hay destinos disponibles para iniciar el test.")
+		return
+		
+	var num_destinos = int(spin_box_test.value)
+	test_destinations_remaining = num_destinos
+	test_mode_active = true
+	btn_test_aleatorio.text = "Detener Test (%d)" % test_destinations_remaining
+	
+	print("[Test] Iniciando prueba aleatoria de %d destinos..." % num_destinos)
+	_ir_a_siguiente_destino_test()
+
+func _ir_a_siguiente_destino_test() -> void:
+	if not test_mode_active or test_destinations_remaining <= 0:
+		_stop_test_mode()
+		return
+		
+	var rover = creador.current_rover
+	var current_cell = navigation.world_to_grid(rover.global_position)
+	var target_types = ["punto_interes", "objetivo"]
+	var targets = navigation.get_all_targets(rover.global_position, target_types)
+	
+	var valid_targets = []
+	for tgt in targets:
+		var cell = tgt["cell"] as Vector2i
+		if cell != current_cell and cell != last_target_cell:
+			valid_targets.append(tgt)
+			
+	if valid_targets.is_empty():
+		for tgt in targets:
+			var cell = tgt["cell"] as Vector2i
+			if cell != current_cell:
+				valid_targets.append(tgt)
+				
+	if valid_targets.is_empty():
+		print("[Test] No se encontraron destinos válidos para el test.")
+		_stop_test_mode()
+		return
+		
+	var selected_target = valid_targets[randi() % valid_targets.size()]
+	last_target_cell = selected_target["cell"]
+	
+	var target_pos = navigation.grid_to_world(last_target_cell)
+	print("[Test] Destinos restantes: %d. Próximo destino aleatorio: %s" % [test_destinations_remaining, selected_target["name"]])
+	
+	var path = navigation.calculate_path(rover.global_position, target_pos)
+	if path.size() > 0:
+		navigation.start_navigation()
+		var visual_points = navigation.get_path_visual_points()
+		path_visualizer.draw_path(visual_points)
+		auto_controller.start()
+		btn_navegar.text = "Detener"
+	else:
+		print("[Test] Error: No se pudo trazar una ruta hacia %s. Reintentando..." % selected_target["name"])
+		await get_tree().physics_frame
+		_ir_a_siguiente_destino_test()
+
+func _stop_test_mode() -> void:
+	test_mode_active = false
+	test_destinations_remaining = 0
+	if btn_test_aleatorio:
+		btn_test_aleatorio.text = "Test Aleatorio"
+	if auto_controller.is_active:
+		auto_controller.stop()
+	if path_visualizer:
+		path_visualizer.clear()
+	if btn_navegar:
+		btn_navegar.text = "Seleccionar Destino"
+	print("[Test] Prueba aleatoria finalizada.")

@@ -169,6 +169,31 @@ offset_bottom = 350.0
 grow_horizontal = 0
 text = "Voltear Rover"
 
+[node name="BtnTestAleatorio" type="Button" parent="UIOverlay" unique_id=500000009]
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -210.0
+offset_top = 360.0
+offset_right = -10.0
+offset_bottom = 400.0
+grow_horizontal = 0
+text = "Test Aleatorio"
+
+[node name="SpinBoxTest" type="SpinBox" parent="UIOverlay" unique_id=500000010]
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -210.0
+offset_top = 410.0
+offset_right = -10.0
+offset_bottom = 450.0
+grow_horizontal = 0
+min_value = 1.0
+max_value = 100.0
+value = 5.0
+prefix = "Cant: "
+
 [node name="FileDialog" type="FileDialog" parent="UIOverlay" unique_id=862199641]
 access = 2
 filters = PackedStringArray("*.json ; JSON Files")

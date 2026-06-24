@@ -1,0 +1,24 @@
+{
+  "cols": 16,
+  "rows": 16,
+  "read_mode": "tile_types",
+  "tiles": [
+    ["no_caminable","no_caminable","no_caminable","no_caminable","no_caminable","no_caminable","no_caminable","no_caminable","no_caminable","no_caminable","no_caminable","no_caminable","no_caminable","no_caminable","no_caminable","no_caminable"],
+    ["no_caminable","no_caminable","no_caminable","caminable","no_caminable","no_caminable","caminable","no_caminable","no_caminable","caminable","no_caminable","no_caminable","caminable","no_caminable","no_caminable","no_caminable"],
+    ["no_caminable","no_caminable","no_caminable","caminable","no_caminable","no_caminable","caminable","no_caminable","no_caminable","caminable","no_caminable","no_caminable","caminable","no_caminable","no_caminable","no_caminable"],
+    ["no_caminable","caminable","caminable","spawn_point","caminable","caminable","caminable","caminable","caminable","punto_interes","caminable","caminable","caminable","caminable","caminable","no_caminable"],
+    ["no_caminable","no_caminable","no_caminable","caminable","no_caminable","no_caminable","caminable","no_caminable","no_caminable","caminable","no_caminable","no_caminable","caminable","no_caminable","no_caminable","no_caminable"],
+    ["no_caminable","no_caminable","no_caminable","caminable","no_caminable","no_caminable","caminable","no_caminable","no_caminable","caminable","no_caminable","no_caminable","caminable","no_caminable","no_caminable","no_caminable"],
+    ["no_caminable","caminable","caminable","caminable","caminable","caminable","caminable","caminable","caminable","caminable","caminable","caminable","punto_interes","caminable","caminable","no_caminable"],
+    ["no_caminable","no_caminable","no_caminable","caminable","no_caminable","no_caminable","caminable","no_caminable","no_caminable","caminable","no_caminable","no_caminable","caminable","no_caminable","no_caminable","no_caminable"],
+    ["no_caminable","no_caminable","no_caminable","caminable","no_caminable","no_caminable","caminable","no_caminable","no_caminable","caminable","no_caminable","no_caminable","caminable","no_caminable","no_caminable","no_caminable"],
+    ["no_caminable","caminable","caminable","punto_interes","caminable","caminable","caminable","caminable","caminable","punto_interes","caminable","caminable","caminable","caminable","caminable","no_caminable"],
+    ["no_caminable","no_caminable","no_caminable","caminable","no_caminable","no_caminable","caminable","no_caminable","no_caminable","caminable","no_caminable","no_caminable","caminable","no_caminable","no_caminable","no_caminable"],
+    ["no_caminable","no_caminable","no_caminable","caminable","no_caminable","no_caminable","caminable","no_caminable","no_caminable","caminable","no_caminable","no_caminable","caminable","no_caminable","no_caminable","no_caminable"],
+    ["no_caminable","caminable","caminable","caminable","caminable","caminable","punto_interes","caminable","caminable","caminable","caminable","caminable","punto_interes","caminable","caminable","no_caminable"],
+    ["no_caminable","no_caminable","no_caminable","caminable","no_caminable","no_caminable","caminable","no_caminable","no_caminable","caminable","no_caminable","no_caminable","caminable","no_caminable","no_caminable","no_caminable"],
+    ["no_caminable","no_caminable","no_caminable","caminable","no_caminable","no_caminable","caminable","no_caminable","no_caminable","caminable","no_caminable","no_caminable","caminable","no_caminable","no_caminable","no_caminable"],
+    ["no_caminable","no_caminable","no_caminable","no_caminable","no_caminable","no_caminable","no_caminable","no_caminable","no_caminable","no_caminable","no_caminable","no_caminable","no_caminable","no_caminable","no_caminable","no_caminable"]
+  ],
+  "version": 2
+}
