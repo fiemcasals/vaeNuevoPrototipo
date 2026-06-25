@@ -23,15 +23,92 @@ var _ws_client: WebSocketPeer = WebSocketPeer.new()
 var _ws_connected: bool = false
 var _target_point_from_server: Vector3 = Vector3.ZERO
 
+# Remote Brain variables
+var _reconnect_timer: float = 0.0
+var _pending_level_init: bool = false
+var _cached_tiles: Array = []
+var _cached_spacing: float = 4.0
+
+signal remote_path_received(path: Array)
+signal remote_path_failed
 signal navigation_started
 signal navigation_stopped(interrupted: bool)
 signal waypoint_reached
 
 func _ready():
-	set_physics_process(false)
 	# Cargar configuración desde RoverConfig
 	if RoverConfig:
 		max_speed = RoverConfig.velocidad_maxima * 0.5  # Aumentar velocidad máxima al 50% para mayor velocidad en rectas
+	
+	set_process(true)
+	set_physics_process(false)
+	
+	if use_remote_logic:
+		_connect_to_server()
+
+func _process(delta: float):
+	if not use_remote_logic:
+		return
+		
+	_ws_client.poll()
+	var state = _ws_client.get_ready_state()
+	
+	if state == WebSocketPeer.STATE_OPEN:
+		if not _ws_connected:
+			_ws_connected = true
+			print("[Autopilot] Conexión establecida con el cerebro de pps-vae.")
+			if _pending_level_init:
+				_send_level_init()
+				
+		_read_messages_from_server(delta)
+		
+	elif state == WebSocketPeer.STATE_CLOSED:
+		if _ws_connected:
+			_ws_connected = false
+			print("[Autopilot] Se perdió la conexión con el cerebro de pps-vae. Reintentando...")
+		_reconnect_timer -= delta
+		if _reconnect_timer <= 0.0:
+			_reconnect_timer = 3.0
+			_connect_to_server()
+
+func _connect_to_server():
+	print("[Autopilot] Conectando al cerebro pps-vae en ", remote_url)
+	_ws_connected = false
+	var err = _ws_client.connect_to_url(remote_url)
+	if err != OK:
+		print("[Autopilot] Error al intentar iniciar conexión WebSocket: ", err)
+
+func init_remote_level(tiles: Array, spacing: float):
+	_cached_tiles = tiles
+	_cached_spacing = spacing
+	_pending_level_init = true
+	if _ws_connected:
+		_send_level_init()
+
+func _send_level_init():
+	var message = {
+		"type": "init_level",
+		"tiles": _cached_tiles,
+		"tile_spacing": _cached_spacing
+	}
+	_ws_client.send_text(JSON.stringify(message))
+	_pending_level_init = false
+	print("[Autopilot] Cuadrícula del nivel enviada al cerebro pps-vae.")
+
+func request_remote_path(start_pos: Vector3, target_pos: Vector3, heading: float):
+	if not _ws_connected:
+		print("[Autopilot] Error: No conectado al cerebro pps-vae. Reintentando...")
+		_connect_to_server()
+		remote_path_failed.emit()
+		return
+		
+	var message = {
+		"type": "calculate_path",
+		"start": { "x": start_pos.x, "z": start_pos.z, "heading": heading },
+		"goal": { "x": target_pos.x, "z": target_pos.z }
+	}
+	_ws_client.send_text(JSON.stringify(message))
+	print("[Autopilot] Solicitando cálculo de ruta al cerebro pps-vae...")
 
 func start():
 	is_active = true
@@ -41,7 +118,9 @@ func start():
 		rover.brake = 0.0
 		rover.steering = 0.0
 	
-	_generate_lane_split_path()
+	if not use_remote_logic:
+		_generate_lane_split_path()
+		
 	current_waypoint_index = 0
 	
 	# Cambiar el color del visualizador a verde
@@ -49,15 +128,6 @@ func start():
 	if path_visualizer and path_visualizer.has_method("set_color"):
 		path_visualizer.set_color(Color.GREEN)
 		
-	if use_remote_logic:
-		_ws_connected = false
-		var err = _ws_client.connect_to_url(remote_url)
-		if err == OK:
-			print("[Autopilot] Conectando a servidor de lógica remota en ", remote_url)
-		else:
-			print("[Autopilot] Error al conectar a la lógica remota. Usando modo local.")
-			use_remote_logic = false
-			
 	set_physics_process(true)
 	navigation_started.emit()
 	print("[Autopilot] Control automático activo.")
@@ -69,8 +139,6 @@ func stop(interrupted: bool = true):
 	if use_remote_logic and _ws_connected:
 		var message = {"type": "stop"}
 		_ws_client.send_text(JSON.stringify(message))
-		_ws_client.close()
-		_ws_connected = false
 		
 	modified_path_positions.clear()
 	is_corner_waypoint.clear()
@@ -269,51 +337,14 @@ func _physics_process(delta: float):
 		return
 		
 	if use_remote_logic:
-		_ws_client.poll()
-		var ws_state = _ws_client.get_ready_state()
-		
-		if ws_state == WebSocketPeer.STATE_OPEN:
-			if not _ws_connected:
-				_ws_connected = true
-				print("[Autopilot] Conectado a la lógica remota. Enviando ruta...")
-				_send_path_to_remote()
-				
-			_send_telemetry_to_remote()
-			_read_orders_from_remote(delta)
-			
-		elif ws_state == WebSocketPeer.STATE_CLOSED:
-			if _ws_connected:
-				_ws_connected = false
-				print("[Autopilot] Conexión cerrada con la lógica remota. Reintentando...")
-			_ws_client.connect_to_url(remote_url)
-			
-		elif ws_state == WebSocketPeer.STATE_CONNECTING:
-			pass
-			
+		_send_telemetry_to_remote()
 		_draw_visuals()
 	else:
 		_run_local_control(delta)
 
-func _send_path_to_remote():
-	if modified_path_positions.size() == 0:
-		return
-	var path_data = []
-	for i in range(modified_path_positions.size()):
-		var pos = modified_path_positions[i]
-		var is_corner = 0.4 if is_actual_corner[i] else 0.0
-		path_data.append({
-			"x": pos.x,
-			"z": pos.z,
-			"steer": is_corner,
-			"direction": 1
-		})
-	var message = {
-		"type": "set_path",
-		"path": path_data
-	}
-	_ws_client.send_text(JSON.stringify(message))
-
 func _send_telemetry_to_remote():
+	if not rover:
+		return
 	var forward_basis = -rover.global_transform.basis.z
 	var linear_vel = rover.linear_velocity
 	var speed_val = linear_vel.length()
@@ -324,17 +355,12 @@ func _send_telemetry_to_remote():
 		"type": "telemetry",
 		"x": rover.global_position.x,
 		"z": rover.global_position.z,
-		"yaw": rover.global_rotation.y,
-		"speed": speed_val,
-		"config": {
-			"wheelbase": RoverConfig.distancia_entre_ejes if RoverConfig else 2.0,
-			"torque": RoverConfig.torque if RoverConfig else 300.0,
-			"max_speed": max_speed
-		}
+		"heading": rover.global_rotation.y,
+		"speed": speed_val
 	}
 	_ws_client.send_text(JSON.stringify(message))
 
-func _read_orders_from_remote(delta: float):
+func _read_messages_from_server(delta: float):
 	while _ws_client.get_available_packet_count() > 0:
 		var packet = _ws_client.get_packet()
 		var msg_str = packet.get_string_from_utf8()
@@ -342,27 +368,62 @@ func _read_orders_from_remote(delta: float):
 		var err = json.parse(msg_str)
 		if err == OK:
 			var data = json.get_data()
-			if data.has("type") and data["type"] == "orders":
+			var msg_type = data.get("type", "")
+			
+			if msg_type == "level_initialized":
+				print("[Autopilot] Cerebro pps-vae listo: Cuadrícula de nivel inicializada.")
+				
+			elif msg_type == "path_calculated":
+				var raw_path = data.get("path", [])
+				var converted_path: Array[Vector3] = []
+				for pt in raw_path:
+					converted_path.append(Vector3(pt["x"], rover.global_position.y if rover else 0.38, pt["z"]))
+					
+				# Store path locally for visualization
+				modified_path_positions = converted_path
+				current_waypoint_index = 0
+				
+				# Populate grid/corner visualizer data
+				raw_grid_positions.clear()
+				is_actual_corner.clear()
+				for pt in raw_path:
+					raw_grid_positions.append(Vector3(pt["x"], 0.38, pt["z"]))
+					is_actual_corner.append(abs(pt.get("steer", 0.0)) > 0.1)
+					
+				remote_path_received.emit(converted_path)
+				
+			elif msg_type == "path_failed":
+				print("[Autopilot] Cerebro pps-vae reportó que no se pudo encontrar ruta.")
+				remote_path_failed.emit()
+				
+			elif msg_type == "orders":
+				if not is_active:
+					continue
+					
 				if data.has("completed") and data["completed"]:
-					print("[Autopilot] Destino alcanzado (Lógica Remota).")
+					print("[Autopilot] Destino alcanzado (Cerebro pps-vae).")
 					stop(false)
 					if navigation:
 						navigation.target_reached.emit()
 					return
 					
 				var target_steering = data.get("steering", 0.0)
-				var engine_force = data.get("engine_force", 0.0)
-				var brake = data.get("brake", 0.0)
+				var throttle_val = data.get("throttle", 0.0)
+				var brake_val = data.get("brake", 0.0)
 				
-				# Apply steering with actuator speed limits
+				# Convert normalized throttle/brake to physical values in Godot
+				var current_power = RoverConfig.torque if RoverConfig else 300.0
+				var engine_force = throttle_val * current_power * 2.0
+				
+				# Apply steering with wheel physical speed limits
 				var steering_speed = 4.0
 				rover.steering = move_toward(rover.steering, target_steering, steering_speed * delta)
 				
 				# Apply forces
 				rover.engine_force = engine_force
-				rover.brake = brake
+				rover.brake = brake_val
 				
-				# Update indices & visual targets
+				# Update current waypoint index and target point for drawing
 				if data.has("current_waypoint_index"):
 					current_waypoint_index = int(data["current_waypoint_index"])
 				if data.has("target_point") and data["target_point"] != null:

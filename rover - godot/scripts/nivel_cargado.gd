@@ -28,8 +28,10 @@ var rotacion_original: Transform3D
 var test_mode_active: bool = false
 var test_destinations_remaining: int = 0
 var last_target_cell: Vector2i = Vector2i(-1, -1)
+var _navigating_to_spawn: bool = false
 
 func _ready() -> void:
+	randomize()
 	btn_volver.pressed.connect(_volver_al_menu)
 	btn_cargar.pressed.connect(_on_cargar_presionado)
 	btn_cambiar_camara.pressed.connect(_on_cambiar_camara_presionado)
@@ -54,6 +56,8 @@ func _ready() -> void:
 	
 	if auto_controller:
 		auto_controller.navigation = navigation
+		auto_controller.remote_path_received.connect(_on_remote_path_received)
+		auto_controller.remote_path_failed.connect(_on_remote_path_failed)
 	
 	SignalBus.change_cam.connect(_on_change_cam)
 	
@@ -63,8 +67,8 @@ func _ready() -> void:
 	
 	btn_test_aleatorio.pressed.connect(_on_test_aleatorio_presionado)
 	
-	auto_controller.navigation_stopped.connect(func():
-		if test_mode_active:
+	auto_controller.navigation_stopped.connect(func(interrupted: bool):
+		if interrupted and test_mode_active:
 			test_mode_active = false
 			test_destinations_remaining = 0
 			btn_test_aleatorio.text = "Test Aleatorio"
@@ -135,6 +139,10 @@ func _on_rover_instanciado(_position: Vector3) -> void:
 			"tiles": _get_level_tile_data()
 		}
 		navigation.initialize_level(level_data, creador.tile_spacing)
+		
+		if auto_controller and auto_controller.use_remote_logic:
+			auto_controller.init_remote_level(level_data.tiles, creador.tile_spacing)
+			
 		nivel_cargado = true
 		btn_navegar.disabled = false
 		btn_ir_spawn.disabled = false
@@ -178,15 +186,18 @@ func _on_target_selected(target_data: Dictionary) -> void:
 	var target_cell = target_data["cell"]
 	var target_pos = navigation.grid_to_world(target_cell)
 	print("Navegando a: ", target_data["name"])
+	_navigating_to_spawn = false
 	
-	var path = navigation.calculate_path(rover.global_position, target_pos)
-	
-	if path.size() > 0:
-		navigation.start_navigation()
-		var visual_points = navigation.get_path_visual_points()
-		path_visualizer.draw_path(visual_points)
-		auto_controller.start()
-		btn_navegar.text = "Detener"
+	if auto_controller and auto_controller.use_remote_logic:
+		auto_controller.request_remote_path(rover.global_position, target_pos, rover.global_rotation.y)
+	else:
+		var path = navigation.calculate_path(rover.global_position, target_pos)
+		if path.size() > 0:
+			navigation.start_navigation()
+			var visual_points = navigation.get_path_visual_points()
+			path_visualizer.draw_path(visual_points)
+			auto_controller.start()
+			btn_navegar.text = "Detener"
 
 func _on_target_selector_cancelled() -> void:
 	print("Selección de destino cancelada")
@@ -204,15 +215,18 @@ func _on_ir_spawn_presionado() -> void:
 	
 	var rover = creador.current_rover
 	var spawn_pos = navigation.grid_to_world(creador.spawn_cell)
+	_navigating_to_spawn = true
 	
-	var path = navigation.calculate_path(rover.global_position, spawn_pos)
-	
-	if path.size() > 0:
-		navigation.start_navigation()
-		var visual_points = navigation.get_path_visual_points()
-		path_visualizer.draw_path(visual_points)
-		auto_controller.start()
-		btn_ir_spawn.text = "Detener"
+	if auto_controller and auto_controller.use_remote_logic:
+		auto_controller.request_remote_path(rover.global_position, spawn_pos, rover.global_rotation.y)
+	else:
+		var path = navigation.calculate_path(rover.global_position, spawn_pos)
+		if path.size() > 0:
+			navigation.start_navigation()
+			var visual_points = navigation.get_path_visual_points()
+			path_visualizer.draw_path(visual_points)
+			auto_controller.start()
+			btn_ir_spawn.text = "Detener"
 
 func _on_reaparecer_presionado() -> void:
 	if not nivel_cargado or not creador or not creador.current_rover:
@@ -338,6 +352,7 @@ func _on_test_aleatorio_presionado() -> void:
 	var num_destinos = int(spin_box_test.value)
 	test_destinations_remaining = num_destinos
 	test_mode_active = true
+	last_target_cell = Vector2i(-1, -1)
 	btn_test_aleatorio.text = "Detener Test (%d)" % test_destinations_remaining
 	
 	print("[Test] Iniciando prueba aleatoria de %d destinos..." % num_destinos)
@@ -375,16 +390,36 @@ func _ir_a_siguiente_destino_test() -> void:
 	
 	var target_pos = navigation.grid_to_world(last_target_cell)
 	print("[Test] Destinos restantes: %d. Próximo destino aleatorio: %s" % [test_destinations_remaining, selected_target["name"]])
+	_navigating_to_spawn = false
 	
-	var path = navigation.calculate_path(rover.global_position, target_pos)
-	if path.size() > 0:
-		navigation.start_navigation()
-		var visual_points = navigation.get_path_visual_points()
-		path_visualizer.draw_path(visual_points)
-		auto_controller.start()
-		btn_navegar.text = "Detener"
+	if auto_controller and auto_controller.use_remote_logic:
+		auto_controller.request_remote_path(rover.global_position, target_pos, rover.global_rotation.y)
 	else:
-		print("[Test] Error: No se pudo trazar una ruta hacia %s. Reintentando..." % selected_target["name"])
+		var path = navigation.calculate_path(rover.global_position, target_pos)
+		if path.size() > 0:
+			navigation.start_navigation()
+			var visual_points = navigation.get_path_visual_points()
+			path_visualizer.draw_path(visual_points)
+			auto_controller.start()
+			btn_navegar.text = "Detener"
+		else:
+			print("[Test] Error: No se pudo trazar una ruta hacia %s. Reintentando..." % selected_target["name"])
+			await get_tree().physics_frame
+			_ir_a_siguiente_destino_test()
+
+func _on_remote_path_received(path: Array) -> void:
+	navigation.start_navigation()
+	path_visualizer.draw_path(path)
+	auto_controller.start()
+	if _navigating_to_spawn:
+		btn_ir_spawn.text = "Detener"
+	else:
+		btn_navegar.text = "Detener"
+
+func _on_remote_path_failed() -> void:
+	print("[Autopilot] Error: No se pudo obtener la ruta del cerebro pps-vae.")
+	if test_mode_active:
+		print("[Test] Reintentando otro destino...")
 		await get_tree().physics_frame
 		_ir_a_siguiente_destino_test()
 
