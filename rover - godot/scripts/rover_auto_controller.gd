@@ -7,6 +7,10 @@ class_name RoverAutoController
 @export var max_speed: float = 15.0
 @export var rotation_speed: float = 5.0
 
+@export_group("Remote Brain")
+@export var use_remote_logic: bool = true
+@export var remote_url: String = "ws://localhost:8767"
+
 var is_active: bool = false
 var target_position: Vector3 = Vector3.ZERO
 var modified_path_positions: Array[Vector3] = []
@@ -15,8 +19,12 @@ var raw_grid_positions: Array[Vector3] = []
 var is_actual_corner: Array[bool] = []
 var current_waypoint_index: int = 0
 
+var _ws_client: WebSocketPeer = WebSocketPeer.new()
+var _ws_connected: bool = false
+var _target_point_from_server: Vector3 = Vector3.ZERO
+
 signal navigation_started
-signal navigation_stopped
+signal navigation_stopped(interrupted: bool)
 signal waypoint_reached
 
 func _ready():
@@ -41,13 +49,29 @@ func start():
 	if path_visualizer and path_visualizer.has_method("set_color"):
 		path_visualizer.set_color(Color.GREEN)
 		
+	if use_remote_logic:
+		_ws_connected = false
+		var err = _ws_client.connect_to_url(remote_url)
+		if err == OK:
+			print("[Autopilot] Conectando a servidor de lógica remota en ", remote_url)
+		else:
+			print("[Autopilot] Error al conectar a la lógica remota. Usando modo local.")
+			use_remote_logic = false
+			
 	set_physics_process(true)
 	navigation_started.emit()
-	print("[Autopilot] Control automático activo. Conduciendo por el carril derecho.")
+	print("[Autopilot] Control automático activo.")
 
-func stop():
+func stop(interrupted: bool = true):
 	is_active = false
 	set_physics_process(false)
+	
+	if use_remote_logic and _ws_connected:
+		var message = {"type": "stop"}
+		_ws_client.send_text(JSON.stringify(message))
+		_ws_client.close()
+		_ws_connected = false
+		
 	modified_path_positions.clear()
 	is_corner_waypoint.clear()
 	raw_grid_positions.clear()
@@ -56,7 +80,7 @@ func stop():
 	if rover:
 		rover.auto_controlled = false
 		rover.engine_force = 0.0
-		rover.brake = 10.0
+		rover.brake = 30.0
 		rover.steering = 0.0
 			
 	var path_visualizer = get_node_or_null("../PathVisualizer")
@@ -66,7 +90,7 @@ func stop():
 	if navigation:
 		navigation.stop_navigation()
 		
-	navigation_stopped.emit()
+	navigation_stopped.emit(interrupted)
 	print("[Autopilot] Desactivado.")
 
 func _is_cell_walkable(col: int, row: int) -> bool:
@@ -142,11 +166,14 @@ func _generate_lane_split_path():
 		var final_pos: Vector3
 		
 		if i == 0:
-			var dir = Vector2.UP
-			if path.size() > 1:
-				dir = Vector2(path[1] - path[0]).normalized()
-			var shift = _get_lane_shift(cell_curr, dir)
-			final_pos = navigation.grid_to_world(cell_curr) + shift
+			if rover:
+				final_pos = rover.global_position
+			else:
+				var dir = Vector2.UP
+				if path.size() > 1:
+					dir = Vector2(path[1] - path[0]).normalized()
+				var shift = _get_lane_shift(cell_curr, dir)
+				final_pos = navigation.grid_to_world(cell_curr) + shift
 		elif i == path.size() - 1:
 			var dir = Vector2(path[i] - path[i-1]).normalized()
 			var shift = _get_lane_shift(cell_curr, dir)
@@ -175,6 +202,16 @@ func _generate_lane_split_path():
 				final_pos = Vector3(final_x, world_center.y, final_z)
 				
 		raw_positions.append(final_pos)
+		
+	# Acortar el último segmento para detenerse antes del destino final
+	if raw_positions.size() >= 2:
+		var last_idx = raw_positions.size() - 1
+		var segment = raw_positions[last_idx] - raw_positions[last_idx - 1]
+		var segment_len = segment.length()
+		var dir = segment.normalized()
+		# Evitamos retroceder más del 50% del segmento si este fuera muy corto
+		var shorten_dist = min(1.0, segment_len * 0.5)
+		raw_positions[last_idx] = raw_positions[last_idx] - dir * shorten_dist
 		
 	# 1. Detectar esquinas sobre raw_positions ANTES del suavizado
 	is_corner_waypoint.resize(raw_positions.size())
@@ -231,11 +268,132 @@ func _physics_process(delta: float):
 	if not is_active or not rover or modified_path_positions.size() == 0:
 		return
 		
+	if use_remote_logic:
+		_ws_client.poll()
+		var ws_state = _ws_client.get_ready_state()
+		
+		if ws_state == WebSocketPeer.STATE_OPEN:
+			if not _ws_connected:
+				_ws_connected = true
+				print("[Autopilot] Conectado a la lógica remota. Enviando ruta...")
+				_send_path_to_remote()
+				
+			_send_telemetry_to_remote()
+			_read_orders_from_remote(delta)
+			
+		elif ws_state == WebSocketPeer.STATE_CLOSED:
+			if _ws_connected:
+				_ws_connected = false
+				print("[Autopilot] Conexión cerrada con la lógica remota. Reintentando...")
+			_ws_client.connect_to_url(remote_url)
+			
+		elif ws_state == WebSocketPeer.STATE_CONNECTING:
+			pass
+			
+		_draw_visuals()
+	else:
+		_run_local_control(delta)
+
+func _send_path_to_remote():
+	if modified_path_positions.size() == 0:
+		return
+	var path_data = []
+	for i in range(modified_path_positions.size()):
+		var pos = modified_path_positions[i]
+		var is_corner = 0.4 if is_actual_corner[i] else 0.0
+		path_data.append({
+			"x": pos.x,
+			"z": pos.z,
+			"steer": is_corner,
+			"direction": 1
+		})
+	var message = {
+		"type": "set_path",
+		"path": path_data
+	}
+	_ws_client.send_text(JSON.stringify(message))
+
+func _send_telemetry_to_remote():
+	var forward_basis = -rover.global_transform.basis.z
+	var linear_vel = rover.linear_velocity
+	var speed_val = linear_vel.length()
+	if linear_vel.dot(forward_basis) < 0:
+		speed_val = -speed_val
+		
+	var message = {
+		"type": "telemetry",
+		"x": rover.global_position.x,
+		"z": rover.global_position.z,
+		"yaw": rover.global_rotation.y,
+		"speed": speed_val,
+		"config": {
+			"wheelbase": RoverConfig.distancia_entre_ejes if RoverConfig else 2.0,
+			"torque": RoverConfig.torque if RoverConfig else 300.0,
+			"max_speed": max_speed
+		}
+	}
+	_ws_client.send_text(JSON.stringify(message))
+
+func _read_orders_from_remote(delta: float):
+	while _ws_client.get_available_packet_count() > 0:
+		var packet = _ws_client.get_packet()
+		var msg_str = packet.get_string_from_utf8()
+		var json = JSON.new()
+		var err = json.parse(msg_str)
+		if err == OK:
+			var data = json.get_data()
+			if data.has("type") and data["type"] == "orders":
+				if data.has("completed") and data["completed"]:
+					print("[Autopilot] Destino alcanzado (Lógica Remota).")
+					stop(false)
+					if navigation:
+						navigation.target_reached.emit()
+					return
+					
+				var target_steering = data.get("steering", 0.0)
+				var engine_force = data.get("engine_force", 0.0)
+				var brake = data.get("brake", 0.0)
+				
+				# Apply steering with actuator speed limits
+				var steering_speed = 4.0
+				rover.steering = move_toward(rover.steering, target_steering, steering_speed * delta)
+				
+				# Apply forces
+				rover.engine_force = engine_force
+				rover.brake = brake
+				
+				# Update indices & visual targets
+				if data.has("current_waypoint_index"):
+					current_waypoint_index = int(data["current_waypoint_index"])
+				if data.has("target_point") and data["target_point"] != null:
+					var pt = data["target_point"]
+					_target_point_from_server = Vector3(pt["x"], rover.global_position.y, pt["z"])
+					target_position = _target_point_from_server
+
+func _draw_visuals():
+	var points = PackedVector3Array()
+	points.append(rover.global_position)
+	
+	for i in range(current_waypoint_index, modified_path_positions.size()):
+		points.append(modified_path_positions[i])
+		
+	var path_visualizer = get_node_or_null("../PathVisualizer")
+	if path_visualizer:
+		if path_visualizer.has_method("draw_path"):
+			path_visualizer.draw_path(points)
+		if path_visualizer.has_method("draw_corners"):
+			var corner_points = PackedVector3Array()
+			for i in range(current_waypoint_index, raw_grid_positions.size()):
+				if is_actual_corner[i]:
+					corner_points.append(raw_grid_positions[i])
+			path_visualizer.draw_corners(corner_points)
+
+func _run_local_control(delta: float):
 	# 1. Obtener el waypoint actual
 	if current_waypoint_index < modified_path_positions.size():
 		target_position = modified_path_positions[current_waypoint_index]
 	else:
-		stop()
+		stop(false)
 		if navigation:
 			navigation.target_reached.emit()
 		return
@@ -266,7 +424,7 @@ func _physics_process(delta: float):
 		if current_waypoint_index < modified_path_positions.size():
 			target_position = modified_path_positions[current_waypoint_index]
 		else:
-			stop()
+			stop(false)
 			if navigation:
 				navigation.target_reached.emit()
 			return
@@ -274,27 +432,12 @@ func _physics_process(delta: float):
 		distance_to_target = _get_horizontal_distance(rover.global_position, target_position)
 		distance_to_final = _get_horizontal_distance(rover.global_position, modified_path_positions[modified_path_positions.size() - 1])
 		
-	# 3. Autopilot: Conducir físicamente hacia el waypoint actual de la ruta del carril derecho
+	# 3. Autopilot: Conducir físicamente hacia el waypoint actual
 	_steer_towards_target(delta)
 	_drive_forward(distance_to_final)
 	
-	# 4. Dibujar línea verde y puntos de esquina
-	var points = PackedVector3Array()
-	points.append(rover.global_position)
-	
-	for i in range(current_waypoint_index, modified_path_positions.size()):
-		points.append(modified_path_positions[i])
-		
-	var path_visualizer = get_node_or_null("../PathVisualizer")
-	if path_visualizer:
-		if path_visualizer.has_method("draw_path"):
-			path_visualizer.draw_path(points)
-		if path_visualizer.has_method("draw_corners"):
-			var corner_points = PackedVector3Array()
-			for i in range(current_waypoint_index, raw_grid_positions.size()):
-				if is_actual_corner[i]:
-					corner_points.append(raw_grid_positions[i])
-			path_visualizer.draw_corners(corner_points)
+	# 4. Dibujar
+	_draw_visuals()
 
 func _get_horizontal_distance(from: Vector3, to: Vector3) -> float:
 	var diff = to - from
@@ -303,19 +446,15 @@ func _get_horizontal_distance(from: Vector3, to: Vector3) -> float:
 
 func _steer_towards_target(delta: float):
 	var wheelbase = RoverConfig.distancia_entre_ejes if RoverConfig else 2.0
-	
-	# Calcular lookahead dinámico basado en la velocidad
 	var speed = rover.linear_velocity.length()
 	var lookahead_dist = max(3.0, speed * 0.4 + 2.0)
 	
-	# Encontrar la próxima esquina para no mirar más allá de ella
 	var next_corner_idx = -1
 	for k in range(current_waypoint_index, modified_path_positions.size()):
 		if is_actual_corner[k]:
 			next_corner_idx = k
 			break
 			
-	# Encontrar el punto de lookahead en el camino
 	var steering_target = target_position
 	for i in range(current_waypoint_index, modified_path_positions.size()):
 		if next_corner_idx != -1 and i > next_corner_idx:
@@ -326,41 +465,28 @@ func _steer_towards_target(delta: float):
 			steering_target = pt
 			break
 			
-	# Transformar el objetivo al espacio local del eje trasero (kinematic reference point de Ackerman)
-	# Dado que en este modelo el frente del vehículo es +Z, el eje trasero está en -Z local.
 	var rear_axle_transform = rover.global_transform.translated_local(Vector3(0, 0, -wheelbase * 0.5))
 	var local_target = rear_axle_transform.affine_inverse() * steering_target
-	
 	var distance_squared = local_target.x * local_target.x + local_target.z * local_target.z
 	
 	var target_steering = 0.0
 	if distance_squared > 0.01:
-		# Fórmula Pure Pursuit para Ackerman:
-		# delta = atan2(2 * L * x, d^2)
-		# Dado que en este modelo el frente es +Z y el lado izquierdo es +X,
-		# un local_target.x positivo (a la izquierda) requiere un steering positivo en Godot (giro a la izquierda).
-		# Por lo tanto, el signo del steering coincide con el signo de local_target.x.
 		target_steering = atan2(2.0 * wheelbase * local_target.x, distance_squared)
 		
-	# Limitar ángulo máximo de giro a 30 grados (0.5236 radianes)
 	var max_steering_rad = deg_to_rad(30.0)
 	target_steering = clamp(target_steering, -max_steering_rad, max_steering_rad)
 	
-	# Suavizar la rotación de las ruedas simulando el actuador físico de dirección
-	var steering_speed = 4.0 # radianes/s
+	var steering_speed = 4.0
 	rover.steering = move_toward(rover.steering, target_steering, steering_speed * delta)
 
 func _drive_forward(distance_to_final: float):
 	var speed = rover.linear_velocity.length()
-	
 	var in_mud = rover.mud_zones.size() > 0
 	var current_max_speed = 5.0 if in_mud else max_speed
 	var engine_multiplier = 0.3 if in_mud else 1.0
 	var current_power = RoverConfig.torque if RoverConfig else 300.0
 	
 	var target_speed = current_max_speed
-	
-	# Reducir velocidad de manera anticipada si el waypoint actual o los 2 siguientes son una esquina
 	var approaching_corner = false
 	for k in range(current_waypoint_index, min(current_waypoint_index + 3, modified_path_positions.size())):
 		if is_corner_waypoint[k]:
@@ -368,7 +494,7 @@ func _drive_forward(distance_to_final: float):
 			break
 			
 	if approaching_corner:
-		target_speed = min(target_speed, 3.2) # Velocidad de esquina ágil: 3.2 m/s
+		target_speed = min(target_speed, 3.2)
 		
 	var braking_distance = 12.0
 	if distance_to_final < braking_distance:
@@ -376,8 +502,6 @@ func _drive_forward(distance_to_final: float):
 		target_speed = min(target_speed, current_max_speed * speed_factor * speed_factor)
 	
 	target_speed = max(target_speed, 0.5)
-	
-	# Incrementar torque de aceleración para responder más rápido
 	var acceleration_force = current_power * 2.0 * engine_multiplier
 	
 	if speed < target_speed:
