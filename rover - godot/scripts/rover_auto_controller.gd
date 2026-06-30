@@ -638,29 +638,51 @@ func _process_remote_path(raw_path: Array) -> Array[Vector3]:
 	if raw_path.size() == 0:
 		return shifted_positions
 		
-	# 1. Aplicar desplazamiento de carril (lane shift) a cada punto del camino remoto
+	# 1. Aplicar desplazamiento de carril (lane shift) a cada punto del camino remoto,
+	# calculando la intersección geométrica en las esquinas para mantener los nodos en las esquinas.
 	for i in range(raw_path.size()):
 		var pt = raw_path[i]
 		var pos = Vector3(pt["x"], rover.global_position.y if rover else 0.38, pt["z"])
 		
-		# Determinar dirección para calcular el desplazamiento del carril
-		var dir = Vector2.UP
-		if raw_path.size() > 1:
-			if i == 0:
-				dir = Vector2(raw_path[1]["x"] - raw_path[0]["x"], raw_path[1]["z"] - raw_path[0]["z"]).normalized()
-			elif i == raw_path.size() - 1:
-				dir = Vector2(raw_path[i]["x"] - raw_path[i-1]["x"], raw_path[i]["z"] - raw_path[i-1]["z"]).normalized()
-			else:
-				# Dirección del segmento actual
-				dir = Vector2(raw_path[i+1]["x"] - raw_path[i]["x"], raw_path[i+1]["z"] - raw_path[i]["z"]).normalized()
-				
 		var cell_curr = Vector2i(
 			round(pos.x / navigation.tile_spacing),
 			round(pos.z / navigation.tile_spacing)
 		)
 		
-		var shift = _get_lane_shift(cell_curr, dir)
-		shifted_positions.append(pos + shift)
+		var final_pos = pos
+		if raw_path.size() <= 1:
+			final_pos = pos
+		elif i == 0:
+			var dir = Vector2(raw_path[1]["x"] - raw_path[0]["x"], raw_path[1]["z"] - raw_path[0]["z"]).normalized()
+			var shift = _get_lane_shift(cell_curr, dir)
+			final_pos = pos + shift
+		elif i == raw_path.size() - 1:
+			var dir = Vector2(raw_path[i]["x"] - raw_path[i-1]["x"], raw_path[i]["z"] - raw_path[i-1]["z"]).normalized()
+			var shift = _get_lane_shift(cell_curr, dir)
+			final_pos = pos + shift
+		else:
+			var dir_prev = Vector2(raw_path[i]["x"] - raw_path[i-1]["x"], raw_path[i]["z"] - raw_path[i-1]["z"]).normalized()
+			var dir_next = Vector2(raw_path[i+1]["x"] - raw_path[i]["x"], raw_path[i+1]["z"] - raw_path[i]["z"]).normalized()
+			
+			if dir_prev.dot(dir_next) >= 0.9:
+				var shift = _get_lane_shift(cell_curr, dir_prev)
+				final_pos = pos + shift
+			else:
+				# ¡Esquina! Calcular la intersección geométrica de los dos carriles (previo y siguiente)
+				# para evitar recortar la esquina hacia el interior.
+				var shift_prev = _get_lane_shift(cell_curr, dir_prev)
+				var shift_next = _get_lane_shift(cell_curr, dir_next)
+				
+				var pos_prev = pos + shift_prev
+				var pos_next = pos + shift_next
+				
+				# Tomamos el X del carril del tramo vertical y el Z del carril del tramo horizontal
+				var final_x = pos_prev.x if abs(dir_prev.y) > 0.1 else pos_next.x
+				var final_z = pos_prev.z if abs(dir_prev.x) > 0.1 else pos_next.z
+				
+				final_pos = Vector3(final_x, pos.y, final_z)
+				
+		shifted_positions.append(final_pos)
 		
 	# 2. Acortar el último segmento para detenerse antes del destino final
 	if shifted_positions.size() >= 2:
