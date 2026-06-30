@@ -10,6 +10,7 @@ var ancho_ruedas: float = 0.2
 var distancia_entre_ejes: float = 2.0
 var distancia_entre_ruedas: float = 1.5
 var margen_seguridad: float = 0.5
+var op_mode: String = "vehicle" # "vehicle" or "turret"
 
 func _ready() -> void:
 	cargar_configuracion()

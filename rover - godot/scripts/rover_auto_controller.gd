@@ -23,11 +23,20 @@ var _ws_client: WebSocketPeer = WebSocketPeer.new()
 var _ws_connected: bool = false
 var _target_point_from_server: Vector3 = Vector3.ZERO
 
+# Logger variables
+var _last_logged_pos: Vector3 = Vector3.ZERO
+var _last_logged_speed: float = 0.0
+var _last_logged_steer: float = 0.0
+var _last_logged_engine_force: float = 0.0
+var _last_logged_brake: float = 0.0
+var _total_time: float = 0.0
+
 # Remote Brain variables
 var _reconnect_timer: float = 0.0
 var _pending_level_init: bool = false
 var _cached_tiles: Array = []
 var _cached_spacing: float = 4.0
+var _cached_path_payload: Array = []
 
 signal remote_path_received(path: Array)
 signal remote_path_failed
@@ -57,8 +66,9 @@ func _process(delta: float):
 		if not _ws_connected:
 			_ws_connected = true
 			print("[Autopilot] Conexión establecida con el cerebro de pps-vae.")
-			if _pending_level_init:
-				_send_level_init()
+			_send_level_init()
+			if is_active and not _cached_path_payload.is_empty():
+				_re_send_path()
 				
 		_read_messages_from_server(delta)
 		
@@ -86,6 +96,8 @@ func init_remote_level(tiles: Array, spacing: float):
 		_send_level_init()
 
 func _send_level_init():
+	if _cached_tiles.is_empty():
+		return
 	var message = {
 		"type": "init_level",
 		"tiles": _cached_tiles,
@@ -95,6 +107,16 @@ func _send_level_init():
 	_pending_level_init = false
 	print("[Autopilot] Cuadrícula del nivel enviada al cerebro pps-vae.")
 
+func _re_send_path():
+	if _cached_path_payload.is_empty():
+		return
+	var override_msg = {
+		"type": "set_path",
+		"path": _cached_path_payload
+	}
+	_ws_client.send_text(JSON.stringify(override_msg))
+	print("[Autopilot] Ruta reenviada al cerebro de pps-vae tras reconexión.")
+
 func request_remote_path(start_pos: Vector3, target_pos: Vector3, heading: float):
 	if not _ws_connected:
 		print("[Autopilot] Error: No conectado al cerebro pps-vae. Reintentando...")
@@ -102,9 +124,15 @@ func request_remote_path(start_pos: Vector3, target_pos: Vector3, heading: float
 		remote_path_failed.emit()
 		return
 		
+	var server_heading = heading + PI
+	while server_heading > PI:
+		server_heading -= 2.0 * PI
+	while server_heading <= -PI:
+		server_heading += 2.0 * PI
+		
 	var message = {
 		"type": "calculate_path",
-		"start": { "x": start_pos.x, "z": start_pos.z, "heading": heading },
+		"start": { "x": start_pos.x, "z": start_pos.z, "heading": server_heading },
 		"goal": { "x": target_pos.x, "z": target_pos.z }
 	}
 	_ws_client.send_text(JSON.stringify(message))
@@ -112,6 +140,12 @@ func request_remote_path(start_pos: Vector3, target_pos: Vector3, heading: float
 
 func start():
 	is_active = true
+	_total_time = 0.0
+	_last_logged_pos = Vector3.ZERO
+	_last_logged_speed = 0.0
+	_last_logged_steer = 0.0
+	_last_logged_engine_force = 0.0
+	_last_logged_brake = 0.0
 	if rover:
 		rover.auto_controlled = true # Habilitar piloto automático
 		rover.engine_force = 0.0
@@ -135,6 +169,7 @@ func start():
 func stop(interrupted: bool = true):
 	is_active = false
 	set_physics_process(false)
+	_cached_path_payload.clear()
 	
 	if use_remote_logic and _ws_connected:
 		var message = {"type": "stop"}
@@ -336,6 +371,8 @@ func _physics_process(delta: float):
 	if not is_active or not rover or modified_path_positions.size() == 0:
 		return
 		
+	_log_vehicle_status(delta)
+		
 	if use_remote_logic:
 		_send_telemetry_to_remote()
 		_draw_visuals()
@@ -343,7 +380,7 @@ func _physics_process(delta: float):
 		_run_local_control(delta)
 
 func _send_telemetry_to_remote():
-	if not rover:
+	if not rover or not _ws_connected:
 		return
 	var forward_basis = -rover.global_transform.basis.z
 	var linear_vel = rover.linear_velocity
@@ -351,11 +388,17 @@ func _send_telemetry_to_remote():
 	if linear_vel.dot(forward_basis) < 0:
 		speed_val = -speed_val
 		
+	var server_heading = rover.global_rotation.y + PI
+	while server_heading > PI:
+		server_heading -= 2.0 * PI
+	while server_heading <= -PI:
+		server_heading += 2.0 * PI
+		
 	var message = {
 		"type": "telemetry",
 		"x": rover.global_position.x,
 		"z": rover.global_position.z,
-		"heading": rover.global_rotation.y,
+		"heading": server_heading,
 		"speed": speed_val
 	}
 	_ws_client.send_text(JSON.stringify(message))
@@ -375,21 +418,37 @@ func _read_messages_from_server(delta: float):
 				
 			elif msg_type == "path_calculated":
 				var raw_path = data.get("path", [])
-				var converted_path: Array[Vector3] = []
-				for pt in raw_path:
-					converted_path.append(Vector3(pt["x"], rover.global_position.y if rover else 0.38, pt["z"]))
-					
+				var converted_path = _process_remote_path(raw_path)
+				
 				# Store path locally for visualization
 				modified_path_positions = converted_path
 				current_waypoint_index = 0
 				
 				# Populate grid/corner visualizer data
 				raw_grid_positions.clear()
-				is_actual_corner.clear()
-				for pt in raw_path:
-					raw_grid_positions.append(Vector3(pt["x"], 0.38, pt["z"]))
-					is_actual_corner.append(abs(pt.get("steer", 0.0)) > 0.1)
+				for pt in converted_path:
+					raw_grid_positions.append(pt)
 					
+				# Send the lane-shifted path back to the server so the tracker follows it
+				var path_payload = []
+				for i in range(converted_path.size()):
+					var pos = converted_path[i]
+					var orig_pt = raw_path[i]
+					path_payload.append({
+						"x": pos.x,
+						"z": pos.z,
+						"direction": orig_pt.get("direction", 1),
+						"steer": 0.2 if is_actual_corner[i] else 0.0
+					})
+				
+				_cached_path_payload = path_payload
+				var override_msg = {
+					"type": "set_path",
+					"path": path_payload
+				}
+				_ws_client.send_text(JSON.stringify(override_msg))
+				print("[Autopilot] Enviando ruta desplazada y suavizada al cerebro remoto.")
+				
 				remote_path_received.emit(converted_path)
 				
 			elif msg_type == "path_failed":
@@ -407,13 +466,14 @@ func _read_messages_from_server(delta: float):
 						navigation.target_reached.emit()
 					return
 					
+				var direction_val = data.get("direction", 1)
 				var target_steering = data.get("steering", 0.0)
 				var throttle_val = data.get("throttle", 0.0)
 				var brake_val = data.get("brake", 0.0)
 				
 				# Convert normalized throttle/brake to physical values in Godot
 				var current_power = RoverConfig.torque if RoverConfig else 300.0
-				var engine_force = throttle_val * current_power * 2.0
+				var engine_force = throttle_val * current_power * 2.0 * (-direction_val)
 				
 				# Apply steering with wheel physical speed limits
 				var steering_speed = 4.0
@@ -566,9 +626,106 @@ func _drive_forward(distance_to_final: float):
 	var acceleration_force = current_power * 2.0 * engine_multiplier
 	
 	if speed < target_speed:
-		rover.engine_force = acceleration_force
+		rover.engine_force = -acceleration_force
 		rover.brake = 0.0
 	else:
 		rover.engine_force = 0.0
 		var brake_strength = 10.0 + (speed - target_speed) * 2.0
 		rover.brake = min(brake_strength, 35.0)
+
+func _process_remote_path(raw_path: Array) -> Array[Vector3]:
+	var shifted_positions: Array[Vector3] = []
+	if raw_path.size() == 0:
+		return shifted_positions
+		
+	# 1. Aplicar desplazamiento de carril (lane shift) a cada punto del camino remoto
+	for i in range(raw_path.size()):
+		var pt = raw_path[i]
+		var pos = Vector3(pt["x"], rover.global_position.y if rover else 0.38, pt["z"])
+		
+		# Determinar dirección para calcular el desplazamiento del carril
+		var dir = Vector2.UP
+		if raw_path.size() > 1:
+			if i == 0:
+				dir = Vector2(raw_path[1]["x"] - raw_path[0]["x"], raw_path[1]["z"] - raw_path[0]["z"]).normalized()
+			elif i == raw_path.size() - 1:
+				dir = Vector2(raw_path[i]["x"] - raw_path[i-1]["x"], raw_path[i]["z"] - raw_path[i-1]["z"]).normalized()
+			else:
+				# Dirección del segmento actual
+				dir = Vector2(raw_path[i+1]["x"] - raw_path[i]["x"], raw_path[i+1]["z"] - raw_path[i]["z"]).normalized()
+				
+		var cell_curr = Vector2i(
+			round(pos.x / navigation.tile_spacing),
+			round(pos.z / navigation.tile_spacing)
+		)
+		
+		var shift = _get_lane_shift(cell_curr, dir)
+		shifted_positions.append(pos + shift)
+		
+	# 2. Acortar el último segmento para detenerse antes del destino final
+	if shifted_positions.size() >= 2:
+		var last_idx = shifted_positions.size() - 1
+		var segment = shifted_positions[last_idx] - shifted_positions[last_idx - 1]
+		var segment_len = segment.length()
+		var dir = segment.normalized()
+		var shorten_dist = min(1.0, segment_len * 0.5)
+		shifted_positions[last_idx] = shifted_positions[last_idx] - dir * shorten_dist
+		
+	# 3. Detectar esquinas en base al camino desplazado
+	is_actual_corner.resize(shifted_positions.size())
+	is_actual_corner.fill(false)
+	is_corner_waypoint.resize(shifted_positions.size())
+	is_corner_waypoint.fill(false)
+	
+	for i in range(1, shifted_positions.size() - 1):
+		var v1 = (shifted_positions[i] - shifted_positions[i-1]).normalized()
+		var v2 = (shifted_positions[i+1] - shifted_positions[i]).normalized()
+		var dot = v1.dot(v2)
+		if dot < 0.9:
+			is_actual_corner[i] = true
+			is_corner_waypoint[i] = true
+			is_corner_waypoint[i-1] = true
+			if i + 1 < shifted_positions.size():
+				is_corner_waypoint[i+1] = true
+				
+	# 4. Aplicar suavizado binomial preservando las esquinas detectadas
+	var smoothed_positions = _smooth_path_preserving_corners(shifted_positions, is_actual_corner, 1)
+	return smoothed_positions
+
+func _log_vehicle_status(delta: float):
+	_total_time += delta
+	if not rover:
+		return
+		
+	var current_pos = rover.global_position
+	var current_speed = rover.linear_velocity.length()
+	var forward_basis = -rover.global_transform.basis.z
+	if rover.linear_velocity.dot(forward_basis) < 0:
+		current_speed = -current_speed
+		
+	var current_steer = rover.steering
+	var current_engine_force = rover.engine_force
+	var current_brake = rover.brake
+	
+	var pos_changed = current_pos.distance_to(_last_logged_pos) > 0.05
+	var speed_changed = abs(current_speed - _last_logged_speed) > 0.05
+	var steer_changed = abs(current_steer - _last_logged_steer) > 0.01
+	var force_changed = abs(current_engine_force - _last_logged_engine_force) > 1.0
+	var brake_changed = abs(current_brake - _last_logged_brake) > 1.0
+	
+	if pos_changed or speed_changed or steer_changed or force_changed or brake_changed:
+		_last_logged_pos = current_pos
+		_last_logged_speed = current_speed
+		_last_logged_steer = current_steer
+		_last_logged_engine_force = current_engine_force
+		_last_logged_brake = current_brake
+		
+		print("[VEHICLE_STATE] t=%.2fs | Pos=(%.2f, %.2f) | Speed=%.2f m/s | Steer=%.2f rad | EngineForce=%.1f | Brake=%.1f" % [
+			_total_time,
+			current_pos.x,
+			current_pos.z,
+			current_speed,
+			current_steer,
+			current_engine_force,
+			current_brake
+		])

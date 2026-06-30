@@ -159,7 +159,7 @@ async def generador(websocket):
 
     try:
         for nombre, fn, duracion in PLAYLIST:
-            print(f"\n▶  Secuencia: '{nombre}' ({duracion} s)")
+            print(f"\n[Secuencia] '{nombre}' ({duracion} s)")
             t_ini = time.time()
             paso  = 1.0 / UPDATE_HZ
 
@@ -179,7 +179,7 @@ async def generador(websocket):
                 await websocket.send(trama)
                 await asyncio.sleep(paso)
 
-        print("\n✅ Playlist completada.")
+        print("\n[OK] Playlist completada.")
         await websocket.send("__FIN__")
 
     except websockets.exceptions.ConnectionClosed:
@@ -187,7 +187,7 @@ async def generador(websocket):
 
 
 async def main():
-    print(f"🛰  Simulador VectorNav corriendo en ws://{WS_HOST}:{WS_PORT}")
+    print(f"[Simulador VectorNav] Corriendo en ws://{WS_HOST}:{WS_PORT}")
     print(f"   Frecuencia: {UPDATE_HZ} Hz  |  Secuencias: {len(PLAYLIST)}\n")
     async with websockets.serve(generador, WS_HOST, WS_PORT):
         await asyncio.Future()   # corre indefinidamente

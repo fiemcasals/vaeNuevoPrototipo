@@ -25,6 +25,11 @@ var camara_actual = 0
 var nivel_cargado = false
 var rotacion_original: Transform3D
 
+# Nuevas variables para selector de modalidad e interfaz
+var selection_hub: Panel
+var turret_hud: Control
+var turret_angle_label: Label
+
 var test_mode_active: bool = false
 var test_destinations_remaining: int = 0
 var last_target_cell: Vector2i = Vector2i(-1, -1)
@@ -75,6 +80,8 @@ func _ready() -> void:
 			print("[Test] Prueba aleatoria cancelada por parada del piloto automático.")
 	)
 	
+	setup_modality_uis()
+	
 	# Carga automática de nivel prueba1.json para agilizar las pruebas
 	_cargar_nivel_automatico.call_deferred()
 
@@ -93,6 +100,13 @@ func _input(event: InputEvent) -> void:
 	if event.is_action_pressed("ui_cancel"):
 		if target_selector and target_selector.visible:
 			return
+		if RoverConfig:
+			if RoverConfig.op_mode == "turret":
+				_on_turret_back_pressed()
+				return
+			elif RoverConfig.op_mode == "hub":
+				_volver_al_menu()
+				return
 		if auto_controller.is_active:
 			auto_controller.stop()
 		else:
@@ -147,6 +161,10 @@ func _on_rover_instanciado(_position: Vector3) -> void:
 		btn_navegar.disabled = false
 		btn_ir_spawn.disabled = false
 		btn_test_aleatorio.disabled = false
+		
+		if RoverConfig:
+			RoverConfig.op_mode = "hub"
+			update_mode_visibility()
 
 func _get_level_tile_data() -> Array:
 	var tile_data = []
@@ -322,6 +340,8 @@ func _cambiar_camara() -> void:
 	SignalBus.emit_signal("change_cam", camara_actual)
 
 func _on_change_cam(cam: int) -> void:
+	if RoverConfig and RoverConfig.op_mode == "turret":
+		return
 	if cam == 0:
 		camara_superior.current = true
 		camara_seguimiento.current = false
@@ -435,3 +455,304 @@ func _stop_test_mode() -> void:
 	if btn_navegar:
 		btn_navegar.text = "Seleccionar Destino"
 	print("[Test] Prueba aleatoria finalizada.")
+
+func _process(_delta: float) -> void:
+	if RoverConfig and RoverConfig.op_mode == "turret" and turret_angle_label:
+		var rover = creador.current_rover
+		if rover:
+			var yaw = rover.get("turret_yaw") if rover.get("turret_yaw") != null else 0.0
+			var pitch = rover.get("turret_pitch") if rover.get("turret_pitch") != null else 0.0
+			
+			var yaw_deg = round(rad_to_deg(yaw))
+			# Normalizar grados de Azimut a 0-360
+			var yaw_deg_int = int(yaw_deg) % 360
+			if yaw_deg_int < 0:
+				yaw_deg_int += 360
+				
+			var pitch_deg = round(rad_to_deg(pitch))
+			
+			turret_angle_label.text = "AZIMUT: %d°\nELEVACIÓN: %d°" % [yaw_deg_int, pitch_deg]
+
+func setup_modality_uis() -> void:
+	var overlay = $UIOverlay
+	if not overlay:
+		return
+		
+	# --- SELECTION HUB PANEL ---
+	selection_hub = Panel.new()
+	selection_hub.name = "SelectionHub"
+	selection_hub.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	
+	var sb = StyleBoxFlat.new()
+	sb.bg_color = Color(0.08, 0.08, 0.12, 0.97) # Fondo oscuro moderno
+	selection_hub.add_theme_stylebox_override("panel", sb)
+	overlay.add_child(selection_hub)
+	
+	# VBoxContainer principal para centrar de forma responsiva
+	var v_main = VBoxContainer.new()
+	v_main.alignment = BoxContainer.ALIGNMENT_CENTER
+	v_main.add_theme_constant_override("separation", 40)
+	v_main.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	v_main.grow_horizontal = Control.GROW_DIRECTION_BOTH
+	v_main.grow_vertical = Control.GROW_DIRECTION_BOTH
+	selection_hub.add_child(v_main)
+	
+	# Cabecera
+	var v_header = VBoxContainer.new()
+	v_header.alignment = BoxContainer.ALIGNMENT_CENTER
+	v_header.add_theme_constant_override("separation", 10)
+	v_main.add_child(v_header)
+	
+	var title = Label.new()
+	title.text = "SCCpVA"
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title.add_theme_font_size_override("font_size", 56)
+	title.add_theme_color_override("font_color", Color(0.91, 0.27, 0.38)) # #e94560
+	v_header.add_child(title)
+	
+	var subtitle = Label.new()
+	subtitle.text = "Seleccione estación de operación"
+	subtitle.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	subtitle.add_theme_font_size_override("font_size", 18)
+	subtitle.add_theme_color_override("font_color", Color(0.5, 0.5, 0.6))
+	v_header.add_child(subtitle)
+	
+	# HBoxContainer para las tarjetas de selección
+	var hbox_cards = HBoxContainer.new()
+	hbox_cards.alignment = BoxContainer.ALIGNMENT_CENTER
+	hbox_cards.add_theme_constant_override("separation", 50)
+	v_main.add_child(hbox_cards)
+	
+	# Estilo común para tarjetas
+	var sb_card = StyleBoxFlat.new()
+	sb_card.bg_color = Color(0.12, 0.12, 0.18, 0.9)
+	sb_card.border_color = Color(0.91, 0.27, 0.38, 0.3)
+	sb_card.border_width_left = 2
+	sb_card.border_width_right = 2
+	sb_card.border_width_top = 2
+	sb_card.border_width_bottom = 2
+	sb_card.corner_radius_top_left = 16
+	sb_card.corner_radius_top_right = 16
+	sb_card.corner_radius_bottom_left = 16
+	sb_card.corner_radius_bottom_right = 16
+	sb_card.shadow_color = Color(0, 0, 0, 0.4)
+	sb_card.shadow_size = 12
+	
+	# Tarjeta 1: Conducción
+	var card_veh = PanelContainer.new()
+	card_veh.custom_minimum_size = Vector2(280, 320)
+	card_veh.add_theme_stylebox_override("panel", sb_card)
+	hbox_cards.add_child(card_veh)
+	
+	var v_veh = VBoxContainer.new()
+	v_veh.alignment = BoxContainer.ALIGNMENT_CENTER
+	v_veh.add_theme_constant_override("separation", 20)
+	card_veh.add_child(v_veh)
+	
+	var icon_veh = Label.new()
+	icon_veh.text = "🚗"
+	icon_veh.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	icon_veh.add_theme_font_size_override("font_size", 72)
+	v_veh.add_child(icon_veh)
+	
+	var lbl_veh = Label.new()
+	lbl_veh.text = "Conducción"
+	lbl_veh.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	lbl_veh.add_theme_font_size_override("font_size", 24)
+	lbl_veh.add_theme_color_override("font_color", Color(1, 1, 1))
+	v_veh.add_child(lbl_veh)
+	
+	var desc_veh = Label.new()
+	desc_veh.text = "Control manual del vehículo\ny piloto automático autónomo"
+	desc_veh.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	desc_veh.add_theme_font_size_override("font_size", 14)
+	desc_veh.add_theme_color_override("font_color", Color(0.7, 0.7, 0.75))
+	v_veh.add_child(desc_veh)
+	
+	var btn_veh = Button.new()
+	btn_veh.text = "Operar Vehículo"
+	btn_veh.custom_minimum_size = Vector2(180, 45)
+	btn_veh.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	var sb_btn = StyleBoxFlat.new()
+	sb_btn.bg_color = Color(0.91, 0.27, 0.38) # e94560
+	sb_btn.corner_radius_top_left = 10
+	sb_btn.corner_radius_top_right = 10
+	sb_btn.corner_radius_bottom_left = 10
+	sb_btn.corner_radius_bottom_right = 10
+	btn_veh.add_theme_stylebox_override("normal", sb_btn)
+	btn_veh.pressed.connect(_on_mode_vehicle_selected)
+	v_veh.add_child(btn_veh)
+	
+	# Tarjeta 2: Armamento
+	var card_tur = PanelContainer.new()
+	card_tur.custom_minimum_size = Vector2(280, 320)
+	card_tur.add_theme_stylebox_override("panel", sb_card)
+	hbox_cards.add_child(card_tur)
+	
+	var v_tur = VBoxContainer.new()
+	v_tur.alignment = BoxContainer.ALIGNMENT_CENTER
+	v_tur.add_theme_constant_override("separation", 20)
+	card_tur.add_child(v_tur)
+	
+	var icon_tur = Label.new()
+	icon_tur.text = "🔫"
+	icon_tur.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	icon_tur.add_theme_font_size_override("font_size", 72)
+	v_tur.add_child(icon_tur)
+	
+	var lbl_tur = Label.new()
+	lbl_tur.text = "Armamento"
+	lbl_tur.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	lbl_tur.add_theme_font_size_override("font_size", 24)
+	lbl_tur.add_theme_color_override("font_color", Color(1, 1, 1))
+	v_tur.add_child(lbl_tur)
+	
+	var desc_tur = Label.new()
+	desc_tur.text = "Control de apuntado de la\ntorreta y arma de apoyo"
+	desc_tur.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	desc_tur.add_theme_font_size_override("font_size", 14)
+	desc_tur.add_theme_color_override("font_color", Color(0.7, 0.7, 0.75))
+	v_tur.add_child(desc_tur)
+	
+	var btn_tur = Button.new()
+	btn_tur.text = "Operar Arma"
+	btn_tur.custom_minimum_size = Vector2(180, 45)
+	btn_tur.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	btn_tur.add_theme_stylebox_override("normal", sb_btn)
+	btn_tur.pressed.connect(_on_mode_turret_selected)
+	v_tur.add_child(btn_tur)
+	
+	# Footer
+	var footer = Label.new()
+	footer.text = "Sistema de Comando y Control para Vehículos Autónomos"
+	footer.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	footer.add_theme_font_size_override("font_size", 13)
+	footer.add_theme_color_override("font_color", Color(0.4, 0.4, 0.45))
+	v_main.add_child(footer)
+	
+	# --- TURRET HUD ---
+	turret_hud = Control.new()
+	turret_hud.name = "TurretHUD"
+	turret_hud.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	turret_hud.visible = false
+	overlay.add_child(turret_hud)
+	
+	# Retícula de mira central
+	var crosshair = Control.new()
+	crosshair.name = "Crosshair"
+	crosshair.set_anchors_preset(Control.PRESET_CENTER)
+	crosshair.grow_horizontal = Control.GROW_DIRECTION_BOTH
+	crosshair.grow_vertical = Control.GROW_DIRECTION_BOTH
+	crosshair.draw.connect(func():
+		var c_color = Color(0.91, 0.27, 0.38, 0.8) # e94560
+		crosshair.draw_line(Vector2(-20, 0), Vector2(-6, 0), c_color, 2.0)
+		crosshair.draw_line(Vector2(6, 0), Vector2(20, 0), c_color, 2.0)
+		crosshair.draw_line(Vector2(0, -20), Vector2(0, -6), c_color, 2.0)
+		crosshair.draw_line(Vector2(0, 6), Vector2(0, 20), c_color, 2.0)
+		crosshair.draw_arc(Vector2.ZERO, 8.0, 0, TAU, 24, Color(0.91, 0.27, 0.38, 0.4), 1.0)
+	)
+	turret_hud.add_child(crosshair)
+	
+	# Botón Volver
+	var btn_back = Button.new()
+	btn_back.text = "✏️ Volver"
+	btn_back.custom_minimum_size = Vector2(140, 45)
+	btn_back.position = Vector2(40, 40)
+	var sb_back = StyleBoxFlat.new()
+	sb_back.bg_color = Color(0, 0, 0, 0.6)
+	sb_back.border_color = Color(0.91, 0.27, 0.38, 0.5)
+	sb_back.border_width_left = 1
+	sb_back.border_width_right = 1
+	sb_back.border_width_top = 1
+	sb_back.border_width_bottom = 1
+	sb_back.corner_radius_top_left = 8
+	sb_back.corner_radius_top_right = 8
+	sb_back.corner_radius_bottom_left = 8
+	sb_back.corner_radius_bottom_right = 8
+	btn_back.add_theme_stylebox_override("normal", sb_back)
+	btn_back.pressed.connect(_on_turret_back_pressed)
+	turret_hud.add_child(btn_back)
+	
+	# Panel indicador de ángulos
+	var angle_panel = PanelContainer.new()
+	angle_panel.custom_minimum_size = Vector2(200, 110)
+	angle_panel.set_anchors_preset(Control.PRESET_BOTTOM_RIGHT)
+	angle_panel.grow_horizontal = Control.GROW_DIRECTION_BEGIN
+	angle_panel.grow_vertical = Control.GROW_DIRECTION_BEGIN
+	angle_panel.position = Vector2(overlay.get_viewport().size.x - 240, overlay.get_viewport().size.y - 150)
+	angle_panel.add_theme_stylebox_override("panel", sb_back)
+	turret_hud.add_child(angle_panel)
+	
+	overlay.get_viewport().size_changed.connect(func():
+		var size = overlay.get_viewport().size
+		angle_panel.position = Vector2(size.x - 240, size.y - 150)
+	)
+	
+	var v_ang = VBoxContainer.new()
+	v_ang.alignment = BoxContainer.ALIGNMENT_CENTER
+	v_ang.add_theme_constant_override("separation", 6)
+	angle_panel.add_child(v_ang)
+	
+	var lbl_ang_title = Label.new()
+	lbl_ang_title.text = "TORRETA"
+	lbl_ang_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	lbl_ang_title.add_theme_font_size_override("font_size", 13)
+	lbl_ang_title.add_theme_color_override("font_color", Color(0.91, 0.27, 0.38))
+	v_ang.add_child(lbl_ang_title)
+	
+	turret_angle_label = Label.new()
+	turret_angle_label.text = "AZIMUT: 0°\nELEVACIÓN: 0°"
+	turret_angle_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	turret_angle_label.add_theme_font_size_override("font_size", 18)
+	v_ang.add_child(turret_angle_label)
+
+func set_standard_ui_visible(is_visible: bool) -> void:
+	for child in $UIOverlay.get_children():
+		if child != selection_hub and child != turret_hud:
+			child.visible = is_visible
+
+func update_mode_visibility() -> void:
+	var rover = creador.current_rover
+	if not rover:
+		return
+		
+	var canvas_layer = rover.get_node_or_null("CanvasLayer")
+	
+	if RoverConfig.op_mode == "vehicle":
+		if selection_hub: selection_hub.visible = false
+		if turret_hud: turret_hud.visible = false
+		set_standard_ui_visible(true)
+		if canvas_layer: canvas_layer.visible = true
+		_on_change_cam(camara_actual)
+	elif RoverConfig.op_mode == "turret":
+		if selection_hub: selection_hub.visible = false
+		if turret_hud: turret_hud.visible = true
+		set_standard_ui_visible(false)
+		if canvas_layer: canvas_layer.visible = false
+		
+		# Activar cámara de torreta
+		var turret_cam = rover.get_node_or_null("TurretBase/TurretBarrel/TurretCamera") as Camera3D
+		if turret_cam:
+			turret_cam.current = true
+	else:
+		# Selection Hub
+		if selection_hub: selection_hub.visible = true
+		if turret_hud: turret_hud.visible = false
+		set_standard_ui_visible(false)
+		if canvas_layer: canvas_layer.visible = false
+		_on_change_cam(camara_actual)
+
+func _on_mode_vehicle_selected() -> void:
+	if RoverConfig:
+		RoverConfig.op_mode = "vehicle"
+		update_mode_visibility()
+
+func _on_mode_turret_selected() -> void:
+	if RoverConfig:
+		RoverConfig.op_mode = "turret"
+		update_mode_visibility()
+
+func _on_turret_back_pressed() -> void:
+	if RoverConfig:
+		RoverConfig.op_mode = "hub"
+		update_mode_visibility()
