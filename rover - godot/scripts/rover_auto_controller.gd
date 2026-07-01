@@ -55,7 +55,7 @@ func _ready():
 	
 	if use_remote_logic:
 		_launch_python_brain()
-		_connect_to_server()
+		get_tree().create_timer(1.5).timeout.connect(_connect_to_server)
 
 func _process(delta: float):
 	if not use_remote_logic:

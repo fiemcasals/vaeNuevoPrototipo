@@ -115,6 +115,46 @@ class PathTracker:
         self.max_speed = 7.5       # Default maximum speed
         self.wheelbase = 2.0       # Distance between axles
         self.torque = 300.0        # Engine torque multiplier
+        self._off_grid = False
+        self._recovery_target = None
+        self._stuck_frames = 0
+        self._reversing = False
+        self._reverse_frames = 0
+
+    def _world_to_grid(self, x, z):
+        col = round(x / _level_spacing)
+        row = round(z / _level_spacing)
+        return (col, row)
+
+    def _is_walkable_cell(self, col, row):
+        if not _level_tiles:
+            return True
+        if row < 0 or row >= len(_level_tiles) or col < 0 or col >= len(_level_tiles[0]):
+            return False
+        return _get_weight(_level_tiles[row][col]) < 999999
+
+    def _find_nearest_walkable(self, x, z):
+        if not _level_tiles:
+            return (x, z)
+        start_col, start_row = self._world_to_grid(x, z)
+        if self._is_walkable_cell(start_col, start_row):
+            return (x, z)
+
+        visited = set()
+        queue = [(start_col, start_row)]
+        visited.add((start_col, start_row))
+        max_radius = max(len(_level_tiles), len(_level_tiles[0])) * 2
+
+        while queue:
+            col, row = queue.pop(0)
+            if self._is_walkable_cell(col, row):
+                return (col * _level_spacing, row * _level_spacing)
+            for dcol, drow in [(0, -1), (0, 1), (-1, 0), (1, 0)]:
+                nc, nr = col + dcol, row + drow
+                if (nc, nr) not in visited and abs(nc - start_col) + abs(nr - start_row) <= max_radius:
+                    visited.add((nc, nr))
+                    queue.append((nc, nr))
+        return (x, z)
 
     def set_path(self, path):
         self.path = path
@@ -126,11 +166,79 @@ class PathTracker:
         self.current_index = 0
         print("[Tracker] Tracking stopped.")
 
+    def _apply_anti_stuck(self, orders, speed):
+        if orders["engine_force"] > 100 and abs(speed) < 0.3:
+            self._stuck_frames += 1
+        else:
+            self._stuck_frames = max(0, self._stuck_frames - 2)
+
+        if self._stuck_frames > 90:
+            self._reversing = True
+            self._reverse_frames = 75
+            self._stuck_frames = 0
+            print("[Tracker] Atascado! Marcha atras por 1.25s...")
+
+        if self._reversing:
+            self._reverse_frames -= 1
+            if self._reverse_frames <= 0:
+                self._reversing = False
+                self._stuck_frames = 0
+                print("[Tracker] Fin marcha atras.")
+            else:
+                orders["engine_force"] = -200.0
+                orders["brake"] = 0.0
+                orders["steering"] = 0.0
+                orders["direction"] = -1
+        return orders
+
     def update(self, x, z, yaw, speed, config_data=None):
         if config_data:
             self.max_speed = config_data.get("max_speed", self.max_speed)
             self.wheelbase = config_data.get("wheelbase", self.wheelbase)
             self.torque = config_data.get("torque", self.torque)
+
+        col, row = self._world_to_grid(x, z)
+        if _level_tiles and not self._is_walkable_cell(col, row):
+            self._off_grid = True
+            rx, rz = self._find_nearest_walkable(x, z)
+            self._recovery_target = (rx, rz)
+            dx = rx - x
+            dz = rz - z
+            dist_to_recovery = math.hypot(dx, dz)
+
+            local_z = dx * math.sin(yaw) + dz * math.cos(yaw)
+            local_x = dx * math.cos(yaw) - dz * math.sin(yaw)
+            dist_sq = local_x * local_x + local_z * local_z
+            recovery_steer = 0.0
+            if dist_sq > 0.01:
+                recovery_steer = math.atan2(2.0 * self.wheelbase * local_x, dist_sq)
+            recovery_steer = max(-0.5236, min(0.5236, recovery_steer))
+
+            actual_dir = 0
+            if speed > 0.2:
+                actual_dir = 1
+            elif speed < -0.2:
+                actual_dir = -1
+            effective_dir = actual_dir if actual_dir != 0 else 1
+            if effective_dir == -1:
+                recovery_steer *= -1
+
+            print(f"[Tracker] OFF-GRID (cell {col},{row}). Recuperando hacia ({rx:.1f},{rz:.1f}). Dist={dist_to_recovery:.1f}m")
+            orders = {
+                "type": "orders",
+                "steering": recovery_steer,
+                "engine_force": 200.0,
+                "brake": 15.0,
+                "direction": 1,
+                "current_waypoint_index": 0,
+                "target_point": {"x": rx, "z": rz}
+            }
+            return self._apply_anti_stuck(orders, speed)
+
+        if self._off_grid:
+            print("[Tracker] Recuperado: de vuelta en terreno navegable.")
+            self._off_grid = False
+            self._recovery_target = None
 
         if not self.path:
             return {
@@ -303,7 +411,7 @@ class PathTracker:
                 engine_force = 0.0
                 brake = min(abs(speed_diff) * 2.5, 35.0)
 
-        return {
+        orders = {
             "type": "orders",
             "steering": target_steering,
             "engine_force": engine_force,
@@ -312,6 +420,7 @@ class PathTracker:
             "current_waypoint_index": self.current_index,
             "target_point": {"x": target['x'], "z": target['z']}
         }
+        return self._apply_anti_stuck(orders, speed)
 
 # WebSockets Server
 tracker = PathTracker()
