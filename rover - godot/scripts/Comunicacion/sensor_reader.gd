@@ -29,14 +29,24 @@ var _reconectar_en: float = 0.0
 
 
 func _ready() -> void:
-	_conectar()
+	pass
 
 
-func _conectar() -> void:
+func conectar() -> void:
+	if _ws.get_ready_state() == WebSocketPeer.STATE_OPEN or _ws.get_ready_state() == WebSocketPeer.STATE_CONNECTING:
+		return
 	print("[Sensor] Conectando a ", ws_url, " ...")
 	var err = _ws.connect_to_url(ws_url)
 	if err != OK:
 		push_warning("[Sensor] No se pudo iniciar la conexión: %s" % err)
+
+
+func desconectar() -> void:
+	if _ws.get_ready_state() == WebSocketPeer.STATE_OPEN:
+		_ws.close()
+		_conectado = false
+		print("[Sensor] Desconectado manualmente.")
+		conexion_cambiada.emit(false)
 
 
 func _process(delta: float) -> void:
@@ -68,7 +78,7 @@ func _process(delta: float) -> void:
 				if _reconectar_en <= 0.0:
 					_reconectar_en = reconnect_delay
 					_ws = WebSocketPeer.new()
-					_conectar()
+					conectar()
 
 
 func _procesar_linea(linea: String) -> void:

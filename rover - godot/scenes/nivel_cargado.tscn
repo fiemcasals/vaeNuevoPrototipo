@@ -194,6 +194,17 @@ max_value = 100.0
 value = 5.0
 prefix = "Cant: "
 
+[node name="BtnConectarSensor" type="Button" parent="UIOverlay" unique_id=500000015]
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -210.0
+offset_top = 460.0
+offset_right = -10.0
+offset_bottom = 500.0
+grow_horizontal = 0
+text = "Conectar Sensor"
+
 [node name="FileDialog" type="FileDialog" parent="UIOverlay" unique_id=862199641]
 access = 2
 filters = PackedStringArray("*.json ; JSON Files")

@@ -16,6 +16,98 @@ import websockets
 WS_HOST = "0.0.0.0"
 WS_PORT = 8767
 
+# Grid data received from Godot via init_level
+_level_tiles = []
+_level_spacing = 4.0
+
+WEIGHTS = {
+    "no_caminable": 999999,
+    "obstaculo": 999999,
+    "caminable": 1,
+    "spawn_point": 1,
+    "punto_interes": 1,
+    "objetivo": 1,
+    "peso_3_4": 3,
+}
+ALIASES = {
+    "negro": "no_caminable", "blocked": "no_caminable",
+    "gris": "peso_3_4", "gray": "peso_3_4",
+    "blanco": "caminable", "walkable": "caminable",
+    "verde": "spawn_point", "spawnpoint": "spawn_point",
+    "amarillo": "punto_interes", "interest_point": "punto_interes", "interest": "punto_interes",
+    "naranja": "obstaculo", "obstacle": "obstaculo",
+    "violeta": "objetivo", "target": "objetivo",
+}
+
+
+def _get_weight(tile_type):
+    canonical = ALIASES.get(tile_type, tile_type)
+    return WEIGHTS.get(canonical, 999999)
+
+
+def _is_walkable(col, row):
+    if not _level_tiles:
+        return False
+    if row < 0 or row >= len(_level_tiles) or col < 0 or col >= len(_level_tiles[0]):
+        return False
+    return _get_weight(_level_tiles[row][col]) < 999999
+
+
+def a_star_pathfinding(start_col, start_row, goal_col, goal_row):
+    if not _is_walkable(start_col, start_row) or not _is_walkable(goal_col, goal_row):
+        return None
+
+    start = (start_col, start_row)
+    goal = (goal_col, goal_row)
+
+    open_set = [start]
+    came_from = {}
+    g_score = {start: 0}
+    f_score = {start: abs(start_col - goal_col) + abs(start_row - goal_row)}
+
+    max_iterations = len(_level_tiles) * len(_level_tiles[0]) * 4
+
+    while open_set and max_iterations > 0:
+        max_iterations -= 1
+        current = min(open_set, key=lambda cell: f_score.get(cell, float('inf')))
+
+        if current == goal:
+            path_grid = []
+            node = goal
+            while node in came_from:
+                path_grid.insert(0, node)
+                node = came_from[node]
+            path_grid.insert(0, start)
+
+            path_world = []
+            for col, row in path_grid:
+                path_world.append({
+                    "x": col * _level_spacing,
+                    "z": row * _level_spacing,
+                    "direction": 1,
+                })
+            return path_world
+
+        open_set.remove(current)
+
+        for dcol, drow in [(0, -1), (0, 1), (-1, 0), (1, 0)]:
+            neighbor = (current[0] + dcol, current[1] + drow)
+            if not _is_walkable(neighbor[0], neighbor[1]):
+                continue
+
+            weight = _get_weight(_level_tiles[neighbor[1]][neighbor[0]])
+            tentative_g = g_score[current] + weight
+
+            if neighbor not in g_score or tentative_g < g_score[neighbor]:
+                came_from[neighbor] = current
+                g_score[neighbor] = tentative_g
+                f_score[neighbor] = tentative_g + abs(neighbor[0] - goal_col) + abs(neighbor[1] - goal_row)
+                if neighbor not in open_set:
+                    open_set.append(neighbor)
+
+    return None
+
+
 class PathTracker:
     def __init__(self):
         self.path = []
@@ -246,7 +338,32 @@ async def handler(websocket):
 
             msg_type = data.get("type")
 
-            if msg_type == "set_path":
+            if msg_type == "init_level":
+                global _level_tiles, _level_spacing
+                _level_tiles = data.get("tiles", [])
+                _level_spacing = data.get("tile_spacing", 4.0)
+                print(f"[Logic Server] Grid initialized: {len(_level_tiles)}x{len(_level_tiles[0]) if _level_tiles else 0}, spacing={_level_spacing}")
+                await websocket.send(json.dumps({"type": "level_initialized"}))
+
+            elif msg_type == "calculate_path":
+                start_data = data.get("start", {})
+                goal_data = data.get("goal", {})
+                start_col = round(start_data["x"] / _level_spacing)
+                start_row = round(start_data["z"] / _level_spacing)
+                goal_col = round(goal_data["x"] / _level_spacing)
+                goal_row = round(goal_data["z"] / _level_spacing)
+
+                print(f"[Logic Server] Pathfinding: ({start_col},{start_row}) -> ({goal_col},{goal_row})")
+                path = a_star_pathfinding(start_col, start_row, goal_col, goal_row)
+
+                if path:
+                    await websocket.send(json.dumps({"type": "path_calculated", "path": path}))
+                    print(f"[Logic Server] Path found with {len(path)} waypoints.")
+                else:
+                    await websocket.send(json.dumps({"type": "path_failed"}))
+                    print("[Logic Server] No path found.")
+
+            elif msg_type == "set_path":
                 raw_path = data.get("path", [])
                 tracker.set_path(raw_path)
                 # Broadcast confirmation
@@ -258,7 +375,7 @@ async def handler(websocket):
             elif msg_type == "telemetry":
                 x = data.get("x", 0.0)
                 z = data.get("z", 0.0)
-                yaw = data.get("yaw", 0.0)
+                yaw = data.get("heading", 0.0)
                 speed = data.get("speed", 0.0)
                 config_data = data.get("config")
 

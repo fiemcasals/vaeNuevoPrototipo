@@ -20,6 +20,7 @@ const MENU_PATH = "res://scenes/menu_principal.tscn"
 @onready var camera_transparency = $CameraTransparency
 @onready var btn_test_aleatorio = $UIOverlay/BtnTestAleatorio
 @onready var spin_box_test = $UIOverlay/SpinBoxTest
+@onready var btn_conectar_sensor = $UIOverlay/BtnConectarSensor
 
 var camara_actual = 0
 var nivel_cargado = false
@@ -71,6 +72,9 @@ func _ready() -> void:
 	btn_test_aleatorio.disabled = true
 	
 	btn_test_aleatorio.pressed.connect(_on_test_aleatorio_presionado)
+	
+	btn_conectar_sensor.pressed.connect(_on_conectar_sensor_presionado)
+	Sensor.conexion_cambiada.connect(_on_sensor_conexion_cambiada)
 	
 	auto_controller.navigation_stopped.connect(func(interrupted: bool):
 		if interrupted and test_mode_active:
@@ -472,6 +476,19 @@ func _process(_delta: float) -> void:
 			var pitch_deg = round(rad_to_deg(pitch))
 			
 			turret_angle_label.text = "AZIMUT: %d°\nELEVACIÓN: %d°" % [yaw_deg_int, pitch_deg]
+
+func _on_conectar_sensor_presionado() -> void:
+	if Sensor.esta_conectado():
+		Sensor.desconectar()
+		btn_conectar_sensor.text = "Conectar Sensor"
+	else:
+		Sensor.conectar()
+		btn_conectar_sensor.text = "Desconectar Sensor"
+
+
+func _on_sensor_conexion_cambiada(conectado: bool) -> void:
+	btn_conectar_sensor.text = "Desconectar Sensor" if conectado else "Conectar Sensor"
+
 
 func setup_modality_uis() -> void:
 	var overlay = $UIOverlay

@@ -37,6 +37,7 @@ var _pending_level_init: bool = false
 var _cached_tiles: Array = []
 var _cached_spacing: float = 4.0
 var _cached_path_payload: Array = []
+var _python_pid: int = -1
 
 signal remote_path_received(path: Array)
 signal remote_path_failed
@@ -53,6 +54,7 @@ func _ready():
 	set_physics_process(false)
 	
 	if use_remote_logic:
+		_launch_python_brain()
 		_connect_to_server()
 
 func _process(delta: float):
@@ -87,6 +89,21 @@ func _connect_to_server():
 	var err = _ws_client.connect_to_url(remote_url)
 	if err != OK:
 		print("[Autopilot] Error al intentar iniciar conexión WebSocket: ", err)
+
+func _launch_python_brain():
+	var script_path = ProjectSettings.globalize_path("res://scripts/py/logic_system.py")
+	var python_exe = "python"
+	
+	_python_pid = OS.create_process(python_exe, [script_path])
+	if _python_pid > 0:
+		print("[Autopilot] Cerebro pps-vae lanzado automáticamente (PID: %d)" % _python_pid)
+	else:
+		print("[Autopilot] Error: No se pudo lanzar el cerebro pps-vae. Ejecutalo manualmente: python %s" % script_path)
+
+func _exit_tree():
+	if _python_pid > 0:
+		OS.kill(_python_pid)
+		print("[Autopilot] Cerebro pps-vae detenido (PID: %d)" % _python_pid)
 
 func init_remote_level(tiles: Array, spacing: float):
 	_cached_tiles = tiles
@@ -468,12 +485,8 @@ func _read_messages_from_server(delta: float):
 					
 				var direction_val = data.get("direction", 1)
 				var target_steering = data.get("steering", 0.0)
-				var throttle_val = data.get("throttle", 0.0)
+				var engine_force = data.get("engine_force", 0.0)
 				var brake_val = data.get("brake", 0.0)
-				
-				# Convert normalized throttle/brake to physical values in Godot
-				var current_power = RoverConfig.torque if RoverConfig else 300.0
-				var engine_force = throttle_val * current_power * 2.0 * (-direction_val)
 				
 				# Apply steering with wheel physical speed limits
 				var steering_speed = 4.0
@@ -638,51 +651,29 @@ func _process_remote_path(raw_path: Array) -> Array[Vector3]:
 	if raw_path.size() == 0:
 		return shifted_positions
 		
-	# 1. Aplicar desplazamiento de carril (lane shift) a cada punto del camino remoto,
-	# calculando la intersección geométrica en las esquinas para mantener los nodos en las esquinas.
+	# 1. Aplicar desplazamiento de carril (lane shift) a cada punto del camino remoto
 	for i in range(raw_path.size()):
 		var pt = raw_path[i]
 		var pos = Vector3(pt["x"], rover.global_position.y if rover else 0.38, pt["z"])
 		
+		# Determinar dirección para calcular el desplazamiento del carril
+		var dir = Vector2.UP
+		if raw_path.size() > 1:
+			if i == 0:
+				dir = Vector2(raw_path[1]["x"] - raw_path[0]["x"], raw_path[1]["z"] - raw_path[0]["z"]).normalized()
+			elif i == raw_path.size() - 1:
+				dir = Vector2(raw_path[i]["x"] - raw_path[i-1]["x"], raw_path[i]["z"] - raw_path[i-1]["z"]).normalized()
+			else:
+				# Dirección del segmento actual
+				dir = Vector2(raw_path[i+1]["x"] - raw_path[i]["x"], raw_path[i+1]["z"] - raw_path[i]["z"]).normalized()
+				
 		var cell_curr = Vector2i(
 			round(pos.x / navigation.tile_spacing),
 			round(pos.z / navigation.tile_spacing)
 		)
 		
-		var final_pos = pos
-		if raw_path.size() <= 1:
-			final_pos = pos
-		elif i == 0:
-			var dir = Vector2(raw_path[1]["x"] - raw_path[0]["x"], raw_path[1]["z"] - raw_path[0]["z"]).normalized()
-			var shift = _get_lane_shift(cell_curr, dir)
-			final_pos = pos + shift
-		elif i == raw_path.size() - 1:
-			var dir = Vector2(raw_path[i]["x"] - raw_path[i-1]["x"], raw_path[i]["z"] - raw_path[i-1]["z"]).normalized()
-			var shift = _get_lane_shift(cell_curr, dir)
-			final_pos = pos + shift
-		else:
-			var dir_prev = Vector2(raw_path[i]["x"] - raw_path[i-1]["x"], raw_path[i]["z"] - raw_path[i-1]["z"]).normalized()
-			var dir_next = Vector2(raw_path[i+1]["x"] - raw_path[i]["x"], raw_path[i+1]["z"] - raw_path[i]["z"]).normalized()
-			
-			if dir_prev.dot(dir_next) >= 0.9:
-				var shift = _get_lane_shift(cell_curr, dir_prev)
-				final_pos = pos + shift
-			else:
-				# ¡Esquina! Calcular la intersección geométrica de los dos carriles (previo y siguiente)
-				# para evitar recortar la esquina hacia el interior.
-				var shift_prev = _get_lane_shift(cell_curr, dir_prev)
-				var shift_next = _get_lane_shift(cell_curr, dir_next)
-				
-				var pos_prev = pos + shift_prev
-				var pos_next = pos + shift_next
-				
-				# Tomamos el X del carril del tramo vertical y el Z del carril del tramo horizontal
-				var final_x = pos_prev.x if abs(dir_prev.y) > 0.1 else pos_next.x
-				var final_z = pos_prev.z if abs(dir_prev.x) > 0.1 else pos_next.z
-				
-				final_pos = Vector3(final_x, pos.y, final_z)
-				
-		shifted_positions.append(final_pos)
+		var shift = _get_lane_shift(cell_curr, dir)
+		shifted_positions.append(pos + shift)
 		
 	# 2. Acortar el último segmento para detenerse antes del destino final
 	if shifted_positions.size() >= 2:
