@@ -375,23 +375,6 @@ class PathTracker:
         # 4. Aceleration and speed control
         target_speed = self.max_speed
 
-        # Corner slowdown
-        approaching_corner = False
-        for k in range(self.current_index, min(self.current_index + 3, len(self.path))):
-            if abs(self.path[k].get('steer', 0)) > 0.1:
-                approaching_corner = True
-                break
-
-        if approaching_corner:
-            target_speed = min(target_speed, 3.2)
-
-        # Final destination deceleration
-        distance_to_final = math.hypot(self.path[-1]['x'] - x, self.path[-1]['z'] - z)
-        braking_distance = 12.0
-        if distance_to_final < braking_distance:
-            speed_factor = distance_to_final / braking_distance
-            target_speed = min(target_speed, self.max_speed * speed_factor * speed_factor)
-
         target_speed = max(target_speed, 0.5)
 
         # Direction changes: stop first
