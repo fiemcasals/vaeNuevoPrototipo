@@ -209,6 +209,19 @@ text = "Conectar Sensor"
 access = 2
 filters = PackedStringArray("*.json ; JSON Files")
 
+[node name="LblEstadoAutopilot" type="Label" parent="UIOverlay" unique_id=500000016]
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -210.0
+offset_top = 510.0
+offset_right = -10.0
+offset_bottom = 536.0
+grow_horizontal = 0
+text = "Autopilot: --"
+horizontal_alignment = 1
+theme_override_colors/font_color = Color(0.7, 0.7, 0.7, 1)
+
 [node name="TargetSelector" type="Control" parent="UIOverlay" unique_id=1190014925]
 visible = false
 layout_mode = 3

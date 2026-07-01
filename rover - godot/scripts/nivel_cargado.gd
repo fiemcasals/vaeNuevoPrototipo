@@ -21,6 +21,7 @@ const MENU_PATH = "res://scenes/menu_principal.tscn"
 @onready var btn_test_aleatorio = $UIOverlay/BtnTestAleatorio
 @onready var spin_box_test = $UIOverlay/SpinBoxTest
 @onready var btn_conectar_sensor = $UIOverlay/BtnConectarSensor
+@onready var lbl_estado_autopilot = $UIOverlay/LblEstadoAutopilot
 
 var camara_actual = 0
 var nivel_cargado = false
@@ -476,6 +477,14 @@ func _process(_delta: float) -> void:
 			var pitch_deg = round(rad_to_deg(pitch))
 			
 			turret_angle_label.text = "AZIMUT: %d°\nELEVACIÓN: %d°" % [yaw_deg_int, pitch_deg]
+
+	if auto_controller and lbl_estado_autopilot:
+		if auto_controller.is_connected_to_brain():
+			lbl_estado_autopilot.text = "Autopilot: Conectado"
+			lbl_estado_autopilot.add_theme_color_override("font_color", Color(0.2, 0.9, 0.2))
+		else:
+			lbl_estado_autopilot.text = "Autopilot: Desconectado"
+			lbl_estado_autopilot.add_theme_color_override("font_color", Color(0.9, 0.2, 0.2))
 
 func _on_conectar_sensor_presionado() -> void:
 	if Sensor.esta_conectado():

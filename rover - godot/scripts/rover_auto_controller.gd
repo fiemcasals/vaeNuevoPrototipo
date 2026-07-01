@@ -105,6 +105,9 @@ func _exit_tree():
 		OS.kill(_python_pid)
 		print("[Autopilot] Cerebro pps-vae detenido (PID: %d)" % _python_pid)
 
+func is_connected_to_brain() -> bool:
+	return _ws_connected
+
 func init_remote_level(tiles: Array, spacing: float):
 	_cached_tiles = tiles
 	_cached_spacing = spacing
@@ -483,26 +486,26 @@ func _read_messages_from_server(delta: float):
 						navigation.target_reached.emit()
 					return
 					
-				var direction_val = data.get("direction", 1)
-				var target_steering = data.get("steering", 0.0)
-				var engine_force = data.get("engine_force", 0.0)
-				var brake_val = data.get("brake", 0.0)
-				
-				# Apply steering with wheel physical speed limits
-				var steering_speed = 4.0
-				rover.steering = move_toward(rover.steering, target_steering, steering_speed * delta)
-				
-				# Apply forces
-				rover.engine_force = engine_force
-				rover.brake = brake_val
+			var direction_val = data.get("direction", 1)
+			var target_steering = data.get("steering", 0.0)
+			var engine_force = data.get("engine_force", 0.0)
+			var brake_val = data.get("brake", 0.0)
+			
+			# Apply steering with wheel physical speed limits
+			var steering_speed = 4.0
+			rover.steering = move_toward(rover.steering, target_steering, steering_speed * delta)
+			
+			# Apply forces: negate engine_force by direction (convención del sistema)
+			rover.engine_force = engine_force
+			rover.brake = brake_val
 				
 				# Update current waypoint index and target point for drawing
-				if data.has("current_waypoint_index"):
-					current_waypoint_index = int(data["current_waypoint_index"])
-				if data.has("target_point") and data["target_point"] != null:
-					var pt = data["target_point"]
-					_target_point_from_server = Vector3(pt["x"], rover.global_position.y, pt["z"])
-					target_position = _target_point_from_server
+			if data.has("current_waypoint_index"):
+				current_waypoint_index = int(data["current_waypoint_index"])
+			if data.has("target_point") and data["target_point"] != null:
+				var pt = data["target_point"]
+				_target_point_from_server = Vector3(pt["x"], rover.global_position.y, pt["z"])
+				target_position = _target_point_from_server
 
 func _draw_visuals():
 	var points = PackedVector3Array()

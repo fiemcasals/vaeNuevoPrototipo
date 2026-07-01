@@ -287,19 +287,21 @@ class PathTracker:
         target_speed = max(target_speed, 0.5)
 
         # Direction changes: stop first
-        is_wrong_way = (speed > 1.5 and desired_dir == -1) or (speed < -1.5 and desired_dir == 1)
+        is_wrong_way = (speed > 1.5 and desired_dir == 1) or (speed < -1.5 and desired_dir == -1)
 
         if is_wrong_way:
+            print(f"[Tracker] WRONG WAY: speed={speed:.2f}, desired_dir={desired_dir}. Frenando.")
             engine_force = 0.0
             brake = 30.0
         else:
-            if abs(speed) < target_speed:
-                engine_force = self.torque * 2.0
+            speed_diff = target_speed - abs(speed)
+            max_force = self.torque * 2.0
+            if speed_diff > 0:
+                engine_force = min(speed_diff * 40.0, max_force)
                 brake = 0.0
             else:
                 engine_force = 0.0
-                brake_strength = 10.0 + (abs(speed) - target_speed) * 2.0
-                brake = min(brake_strength, 35.0)
+                brake = min(abs(speed_diff) * 2.5, 35.0)
 
         return {
             "type": "orders",
