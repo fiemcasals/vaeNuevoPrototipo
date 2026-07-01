@@ -13,6 +13,34 @@ class_name Rover
 @export var r_trasera_der: VehicleWheel3D = null
 @export var speed_modifier:float=1.0
 
+# Zonas de evasion circular
+@export var evasion_activada: bool = true
+@export var radio_interno: float = 1.5
+@export var radio_intermedio: float = 2.5
+@export var radio_externo: float = 5.0
+@export var altura_zona: float = 5.0
+@export var mostrar_gizmos: bool = true
+@export_group("Colores Gizmos")
+@export var color_interno: Color = Color(1.0, 0.2, 0.2, 0.3)
+@export var color_intermedio: Color = Color(1.0, 0.7, 0.2, 0.3)
+@export var color_externo: Color = Color(0.2, 0.7, 1.0, 0.3)
+
+var zona_interna: Area3D
+var zona_intermedia: Area3D
+var zona_externa: Area3D
+
+var cuerpos_interna: Array = []
+var cuerpos_intermedia: Array = []
+var cuerpos_externa: Array = []
+
+var direccion_evasion: Vector3 = Vector3.ZERO
+var freno_evasion: float = 0.0
+var evasion_retrocediendo: bool = false
+var evasion_nivel_zona: int = 0
+
+var panel_evasion: Control
+var panel_visible: bool = false
+
 var current_cam:int=3
 var auto_controlled: bool = false
 var mud_zones: Array = []
@@ -36,6 +64,8 @@ func _ready() -> void:
 		max_speed = RoverConfig.velocidad_maxima
 		mass = RoverConfig.peso_rover
 	setup_turret()
+	_crear_zonas_evasion()
+	_crear_panel_evasion()
 
 func setup_turret() -> void:
 	# 1. Crear TurretBase
@@ -101,6 +131,8 @@ func setup_turret() -> void:
 	turret_barrel.add_child(turret_camera)
 
 func _physics_process(delta: float) -> void:
+	_procesar_evasion(delta)
+	
 	if RoverConfig and RoverConfig.op_mode == "turret":
 		# Control de torreta
 		var yaw_input = Input.get_axis("turn_right", "turn_left") # A/D
@@ -136,8 +168,18 @@ func _physics_process(delta: float) -> void:
 		brake = 15.0
 		return
 
+	if evasion_retrocediendo:
+		engine_force = -power * 0.6
+		brake = 0.0
+		r_trasera_iz.brake = 0
+		r_trasera_der.brake = 0
+		steering = -direccion_evasion.x * 0.5
+		return
+
 	if auto_controlled:
 		return
+
+	var evasion_activa = direccion_evasion.length() > 0.01 or freno_evasion > 0.0
 	
 	var throttle = Input.get_axis("backward", "forward")
 	var raw_steer = Input.get_axis("turn_right", "turn_left")
@@ -165,9 +207,17 @@ func _physics_process(delta: float) -> void:
 
 	# Steering
 	steering = move_toward(steering, steer_input * effective_steer, delta * steer_speed)
+	
+	if evasion_activa:
+		steering += direccion_evasion.x * delta * steer_speed
 
 	# Braking
-	if is_braking:
+	if freno_evasion > 0.0:
+		engine_force = 0
+		brake = max(brake_force * brake_multiplier, freno_evasion)
+		r_trasera_iz.brake = 0
+		r_trasera_der.brake = 0
+	elif is_braking:
 		engine_force = 0
 		brake = brake_force * brake_multiplier
 		r_trasera_iz.brake = 0
@@ -181,10 +231,13 @@ func _physics_process(delta: float) -> void:
 		brake = 0
 		r_trasera_iz.brake = 0
 		r_trasera_der.brake = 0
-		engine_force = throttle * power * speed_modifier * engine_multiplier
+		if evasion_activa and freno_evasion == 0.0:
+			engine_force = throttle * power * speed_modifier * engine_multiplier * 0.5
+		else:
+			engine_force = throttle * power * speed_modifier * engine_multiplier
 
 	# Coasting friction
-	if throttle == 0 and not is_braking and not is_handbraking:
+	if throttle == 0 and not is_braking and not is_handbraking and freno_evasion == 0.0:
 		brake = 5.0
 	
 	# Limitar velocidad en barro
@@ -207,6 +260,11 @@ func _input(event: InputEvent) -> void:
 			3:
 				current_cam=1
 				SignalBus.change_cam.emit(current_cam)
+	
+	if event.is_action_pressed("ui_home"):
+		if panel_evasion:
+			panel_visible = not panel_visible
+			panel_evasion.visible = panel_visible
 
 func add_mud_zone(zone: Area3D) -> void:
 	if zone not in mud_zones:
@@ -216,3 +274,244 @@ func add_mud_zone(zone: Area3D) -> void:
 func remove_mud_zone(zone: Area3D) -> void:
 	mud_zones.erase(zone)
 	print("Zonas de barro activas: ", mud_zones.size())
+
+func _crear_zonas_evasion() -> void:
+	zona_externa = _crear_zona(radio_externo, color_externo, "_on_zona_externa_entered", "_on_zona_externa_exited")
+	zona_intermedia = _crear_zona(radio_intermedio, color_intermedio, "_on_zona_intermedia_entered", "_on_zona_intermedia_exited")
+	zona_interna = _crear_zona(radio_interno, color_interno, "_on_zona_interna_entered", "_on_zona_interna_exited")
+
+func _crear_zona(radio: float, color: Color, metodo_enter: String, metodo_exit: String) -> Area3D:
+	var area = Area3D.new()
+	area.collision_layer = 0
+	area.collision_mask = 1
+	area.name = "ZonaEvasion_r" + str(radio)
+	add_child(area)
+	
+	var col_shape = CollisionShape3D.new()
+	col_shape.name = "CollisionShape3D"
+	var cylinder = CylinderShape3D.new()
+	cylinder.radius = radio
+	cylinder.height = altura_zona
+	col_shape.shape = cylinder
+	col_shape.position = Vector3(0, altura_zona / 2.0, 0)
+	col_shape.debug_color = color
+	area.add_child(col_shape)
+	
+	area.body_entered.connect(Callable(self, metodo_enter))
+	area.body_exited.connect(Callable(self, metodo_exit))
+	
+	if mostrar_gizmos:
+		var ring = MeshInstance3D.new()
+		ring.name = "AnilloVisual"
+		var ring_mesh = CylinderMesh.new()
+		ring_mesh.top_radius = radio
+		ring_mesh.bottom_radius = radio
+		ring_mesh.height = 0.1
+		ring_mesh.radial_segments = 64
+		ring.mesh = ring_mesh
+		ring.position = Vector3(0, 0.05, 0)
+		
+		var mat = StandardMaterial3D.new()
+		mat.albedo_color = color
+		mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+		mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+		mat.cull_mode = BaseMaterial3D.CULL_DISABLED
+		ring.material_override = mat
+		area.add_child(ring)
+	
+	return area
+
+func _crear_panel_evasion() -> void:
+	var canvas = get_node_or_null("CanvasLayer")
+	if not canvas:
+		return
+	
+	panel_evasion = Control.new()
+	panel_evasion.name = "PanelEvasion"
+	panel_evasion.visible = false
+	panel_evasion.set_anchors_preset(Control.PRESET_CENTER_LEFT)
+	panel_evasion.position = Vector2(10, 200)
+	canvas.add_child(panel_evasion)
+	
+	var panel_bg = Panel.new()
+	panel_bg.name = "Fondo"
+	panel_bg.custom_minimum_size = Vector2(280, 220)
+	panel_bg.set_anchors_preset(Control.PRESET_FULL_RECT)
+	panel_evasion.add_child(panel_bg)
+	
+	var vbox = VBoxContainer.new()
+	vbox.name = "VBox"
+	vbox.set_anchors_preset(Control.PRESET_FULL_RECT)
+	vbox.add_theme_constant_override("separation", 6)
+	panel_bg.add_child(vbox)
+	
+	var title_bg = Panel.new()
+	title_bg.name = "TitleBg"
+	var title_style = StyleBoxFlat.new()
+	title_style.bg_color = Color(0.15, 0.15, 0.15, 1)
+	title_bg.add_theme_stylebox_override("panel", title_style)
+	vbox.add_child(title_bg)
+	
+	var title = Label.new()
+	title.name = "Titulo"
+	title.text = "  Zonas de Evasion (Home)"
+	title.add_theme_color_override("font_color", Color(1, 1, 1, 1))
+	title_bg.add_child(title)
+	
+	var scroll = ScrollContainer.new()
+	scroll.name = "Scroll"
+	scroll.custom_minimum_size = Vector2(0, 180)
+	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	vbox.add_child(scroll)
+	
+	var content = VBoxContainer.new()
+	content.name = "Content"
+	content.add_theme_constant_override("separation", 8)
+	scroll.add_child(content)
+	
+	_agregar_slider(content, "Interna (Rojo)", radio_interno, color_interno, 0.0, 2.0,
+		func(v): radio_interno = v; _actualizar_zona(zona_interna, v))
+	_agregar_slider(content, "Intermedia (Naranja)", radio_intermedio, color_intermedio, 1.0, 4.0,
+		func(v): radio_intermedio = v; _actualizar_zona(zona_intermedia, v))
+	_agregar_slider(content, "Externa (Azul)", radio_externo, color_externo, 1.0, 8.0,
+		func(v): radio_externo = v; _actualizar_zona(zona_externa, v))
+	
+	var activar_check = CheckBox.new()
+	activar_check.name = "ActivarEvasion"
+	activar_check.text = "Evasion activada"
+	activar_check.button_pressed = evasion_activada
+	activar_check.toggled.connect(func(v): evasion_activada = v)
+	content.add_child(activar_check)
+
+func _agregar_slider(parent: Control, label_text: String, valor: float, color: Color, min_v: float, max_v: float, callback: Callable) -> void:
+	var row = HBoxContainer.new()
+	row.add_theme_constant_override("separation", 6)
+	parent.add_child(row)
+	
+	var lbl = Label.new()
+	lbl.text = label_text
+	lbl.custom_minimum_size = Vector2(140, 0)
+	lbl.add_theme_color_override("font_color", color)
+	row.add_child(lbl)
+	
+	var val_lbl = Label.new()
+	val_lbl.name = "ValorLabel"
+	val_lbl.text = "%.1f" % valor
+	val_lbl.custom_minimum_size = Vector2(35, 0)
+	val_lbl.add_theme_color_override("font_color", color)
+	row.add_child(val_lbl)
+	
+	var slider = HSlider.new()
+	slider.name = "Slider"
+	slider.min_value = min_v
+	slider.max_value = max_v
+	slider.step = 0.1
+	slider.value = valor
+	slider.custom_minimum_size = Vector2(95, 0)
+	slider.value_changed.connect(func(v):
+		val_lbl.text = "%.1f" % v
+		callback.call(v)
+	)
+	row.add_child(slider)
+
+func _actualizar_zona(area: Area3D, radio: float) -> void:
+	if not area:
+		return
+	var col = area.get_node_or_null("CollisionShape3D")
+	if col and col.shape is CylinderShape3D:
+		(col.shape as CylinderShape3D).radius = radio
+	for child in area.get_children():
+		if child is MeshInstance3D and child.name == "AnilloVisual":
+			var m = child.mesh
+			if m is CylinderMesh:
+				m.top_radius = radio
+				m.bottom_radius = radio
+
+func _on_zona_externa_entered(body: Node) -> void:
+	if body not in cuerpos_externa:
+		cuerpos_externa.append(body)
+
+func _on_zona_externa_exited(body: Node) -> void:
+	cuerpos_externa.erase(body)
+
+func _on_zona_intermedia_entered(body: Node) -> void:
+	if body not in cuerpos_intermedia:
+		cuerpos_intermedia.append(body)
+
+func _on_zona_intermedia_exited(body: Node) -> void:
+	cuerpos_intermedia.erase(body)
+
+func _on_zona_interna_entered(body: Node) -> void:
+	if body not in cuerpos_interna:
+		cuerpos_interna.append(body)
+
+func _on_zona_interna_exited(body: Node) -> void:
+	cuerpos_interna.erase(body)
+
+func _procesar_evasion(delta: float) -> void:
+	if not evasion_activada:
+		direccion_evasion = Vector3.ZERO
+		freno_evasion = 0.0
+		evasion_nivel_zona = 0
+		evasion_retrocediendo = false
+		return
+	
+	var vector_evasion = Vector3.ZERO
+	var nivel_zona = 0
+	
+	for body in cuerpos_interna:
+		if is_instance_valid(body) and body is Node3D:
+			var dir = (body as Node3D).global_transform.origin - global_transform.origin
+			dir.y = 0
+			if dir.length() > 0.01:
+				vector_evasion += dir.normalized()
+			nivel_zona = max(nivel_zona, 3)
+	
+	for body in cuerpos_intermedia:
+		if is_instance_valid(body) and body is Node3D:
+			var dir = (body as Node3D).global_transform.origin - global_transform.origin
+			dir.y = 0
+			if dir.length() > 0.01:
+				vector_evasion += dir.normalized() * 0.6
+			nivel_zona = max(nivel_zona, 2)
+	
+	for body in cuerpos_externa:
+		if is_instance_valid(body) and body is Node3D:
+			var dir = (body as Node3D).global_transform.origin - global_transform.origin
+			dir.y = 0
+			if dir.length() > 0.01:
+				vector_evasion += dir.normalized() * 0.3
+			nivel_zona = max(nivel_zona, 1)
+	
+	evasion_nivel_zona = nivel_zona
+	
+	if vector_evasion.length() > 0.01:
+		var forward = -global_transform.basis.z
+		var right = global_transform.basis.x
+		
+		var dir_escape = -vector_evasion.normalized()
+		var lateral = dir_escape.dot(right)
+		var frontal = dir_escape.dot(forward)
+		
+		match nivel_zona:
+			3:
+				direccion_evasion = Vector3(lateral * 0.8, 0, 0)
+				freno_evasion = brake_force * 1.5
+			2:
+				direccion_evasion = Vector3(lateral * 0.3, 0, 0)
+				freno_evasion = 0.0
+			1:
+				direccion_evasion = Vector3(lateral * 0.1, 0, 0)
+				freno_evasion = 0.0
+		
+		if frontal < 0:
+			freno_evasion = 0.0
+		
+		if nivel_zona >= 3:
+			var speed = linear_velocity.length()
+			if speed < 0.5:
+				evasion_retrocediendo = true
+	else:
+		direccion_evasion = Vector3.ZERO
+		freno_evasion = 0.0
+		evasion_retrocediendo = false

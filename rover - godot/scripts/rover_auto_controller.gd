@@ -419,7 +419,16 @@ func _send_telemetry_to_remote():
 		"x": rover.global_position.x,
 		"z": rover.global_position.z,
 		"heading": server_heading,
-		"speed": speed_val
+		"speed": speed_val,
+		"evasion": {
+			"inner_count": rover.cuerpos_interna.size(),
+			"middle_count": rover.cuerpos_intermedia.size(),
+			"outer_count": rover.cuerpos_externa.size(),
+			"lateral": rover.direccion_evasion.x,
+			"brake": rover.freno_evasion,
+			"retrocediendo": rover.evasion_retrocediendo,
+			"nivel_zona": rover.evasion_nivel_zona
+		}
 	}
 	_ws_client.send_text(JSON.stringify(message))
 
@@ -572,6 +581,8 @@ func _run_local_control(delta: float):
 	# 3. Autopilot: Conducir físicamente hacia el waypoint actual
 	_steer_towards_target(delta)
 	_drive_forward(distance_to_final)
+	
+	_aplicar_evasion()
 	
 	# 4. Dibujar
 	_draw_visuals()
@@ -745,3 +756,24 @@ func _log_vehicle_status(delta: float):
 			current_engine_force,
 			current_brake
 		])
+
+func _aplicar_evasion() -> void:
+	if not rover:
+		return
+	if rover.get("evasion_retrocediendo") and rover.get("evasion_retrocediendo") == true:
+		var ev_dir = rover.get("direccion_evasion")
+		rover.engine_force = -RoverConfig.torque * 0.6 if RoverConfig else -180.0
+		rover.brake = 0.0
+		if ev_dir:
+			rover.steering = -ev_dir.x * 0.5
+		return
+	
+	var ev_freno = rover.get("freno_evasion")
+	var ev_dir = rover.get("direccion_evasion")
+	if ev_freno == null or ev_dir == null:
+		return
+	if ev_freno > 0.0:
+		rover.engine_force = 0
+		rover.brake = max(rover.brake, ev_freno)
+	if ev_dir.length() > 0.01:
+		rover.steering += ev_dir.x

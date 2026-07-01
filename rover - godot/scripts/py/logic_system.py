@@ -191,11 +191,31 @@ class PathTracker:
                 orders["direction"] = -1
         return orders
 
-    def update(self, x, z, yaw, speed, config_data=None):
+    def update(self, x, z, yaw, speed, config_data=None, evasion_data=None):
         if config_data:
             self.max_speed = config_data.get("max_speed", self.max_speed)
             self.wheelbase = config_data.get("wheelbase", self.wheelbase)
             self.torque = config_data.get("torque", self.torque)
+
+        # Priority: obstacle avoidance reverse
+        if evasion_data:
+            inner = evasion_data.get("inner_count", 0)
+            retrocediendo = evasion_data.get("retrocediendo", False)
+            nivel_zona = evasion_data.get("nivel_zona", 0)
+            ev_lateral = evasion_data.get("lateral", 0.0)
+            ev_brake = evasion_data.get("brake", 0.0)
+
+            if retrocediendo and nivel_zona >= 3 and inner > 0:
+                orders = {
+                    "type": "orders",
+                    "steering": -ev_lateral * 0.5,
+                    "engine_force": -self.torque * 0.6,
+                    "brake": 0.0,
+                    "direction": -1,
+                    "current_waypoint_index": self.current_index,
+                    "target_point": {"x": x, "z": z}
+                }
+                return orders
 
         col, row = self._world_to_grid(x, z)
         if _level_tiles and not self._is_walkable_cell(col, row):
@@ -403,6 +423,21 @@ class PathTracker:
             "current_waypoint_index": self.current_index,
             "target_point": {"x": target['x'], "z": target['z']}
         }
+
+        # Blend obstacle avoidance from rover's circular zones
+        if evasion_data:
+            inner = evasion_data.get("inner_count", 0)
+            middle = evasion_data.get("middle_count", 0)
+            outer = evasion_data.get("outer_count", 0)
+            ev_lateral = evasion_data.get("lateral", 0.0)
+            ev_brake = evasion_data.get("brake", 0.0)
+
+            if inner > 0 or middle > 0 or outer > 0:
+                orders["steering"] += ev_lateral * 0.3
+                if ev_brake > 0:
+                    orders["engine_force"] = 0
+                    orders["brake"] = max(orders["brake"], ev_brake)
+
         return self._apply_anti_stuck(orders, speed)
 
 # WebSockets Server
@@ -472,8 +507,9 @@ async def handler(websocket):
                 yaw = data.get("heading", 0.0)
                 speed = data.get("speed", 0.0)
                 config_data = data.get("config")
+                evasion_data = data.get("evasion")
 
-                orders = tracker.update(x, z, yaw, speed, config_data)
+                orders = tracker.update(x, z, yaw, speed, config_data, evasion_data)
                 await broadcast(orders)
 
             elif msg_type == "stop":
