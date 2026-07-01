@@ -413,6 +413,24 @@ func _crear_contenedor_node(x_index: int, z_index: int) -> Node3D:
 	# Agregar al grupo de edificios para que la cámara con transparencia lo detecte
 	container_stack.add_to_group("buildings")
 	
+	var wall_height = tile_spacing
+	var wall_y_offset = wall_height / 2.0
+	
+	var wall_body = StaticBody3D.new()
+	wall_body.name = "MuroColision"
+	wall_body.collision_layer = 1
+	wall_body.collision_mask = 1
+	
+	var wall_shape = CollisionShape3D.new()
+	wall_shape.name = "CollisionShape3D"
+	var box = BoxShape3D.new()
+	box.size = Vector3(tile_spacing, wall_height, tile_spacing)
+	wall_shape.shape = box
+	wall_shape.transform.origin = Vector3(0, wall_y_offset, 0)
+	
+	wall_body.add_child(wall_shape)
+	container_stack.add_child(wall_body)
+	
 	# Cantidad de contenedores en la pila: entre 1 y 3
 	var stack_count = randi_range(1, 3)
 	
