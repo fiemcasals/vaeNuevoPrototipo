@@ -10,7 +10,7 @@ var origen_lat = -34.570000
 var origen_lon = -58.430000
 var origen_alt = 0.0
 @export var escala_posicion: float = 111_111.0  # metros por grado, ajustá según tu zona
-@export var margen_error_vector_inicial = Vector3(0.0, -25.0, 0.0)  # Ajustá según tu modelo y orientación inicial
+@export var margen_error_vector_inicial: Vector3 = Vector3(0.0, -25.0, 0.0)  # Ajustá según tu modelo y orientación inicial
 func _ready() -> void:
 	# Conectamos la señal del Autoload a nuestro método local
 	Sensor.datos_recibidos.connect(_on_datos_sensor)
@@ -59,8 +59,8 @@ func _on_datos_sensor(datos: Dictionary) -> void:
 	var v_este:  float = datos["velocidad"]["este_m_s"]
 	var v_abajo: float = datos["velocidad"]["abajo_m_s"]
 
-	# Podés usarlos para animar efectos de velocidad, HUD, partículas, etc.
 	var speed: float = sqrt(v_norte**2 + v_este**2 + v_abajo**2)
+	@warning_ignore("unused_variable")
 	# Ejemplo: $HUD.set_speed(speed)
 
 	# ── Incertidumbre (para debug visual) ────────────────────────────────────

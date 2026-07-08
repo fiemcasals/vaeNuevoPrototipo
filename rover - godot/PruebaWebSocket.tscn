@@ -1,8 +1,8 @@
 [gd_scene format=3 uid="uid://bdc306muho5ux"]
 
-[ext_resource type="Script" uid="uid://dupwlrap10os2" path="res://ControlRemotoAlESP.gd" id="1_ctrl"]
-[ext_resource type="Script" uid="uid://coo8ekm1xm5nr" path="res://JoystickVirtual.gd" id="2_joy"]
-[ext_resource type="Shader" uid="uid://c8oe43w083t6u" path="res://circle.gdshader" id="3_circ"]
+[ext_resource type="Script" path="res://ControlRemotoAlESP.gd" id="1_ctrl"]
+[ext_resource type="Script" path="res://JoystickVirtual.gd" id="2_joy"]
+[ext_resource type="Shader" path="res://circle.gdshader" id="3_circ"]
 
 [sub_resource type="ShaderMaterial" id="mat_circle"]
 shader = ExtResource("3_circ")

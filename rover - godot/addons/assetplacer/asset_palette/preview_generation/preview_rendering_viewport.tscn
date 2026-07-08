@@ -1,8 +1,8 @@
 [gd_scene load_steps=6 format=3 uid="uid://ceq36ojrna1id"]
 
-[ext_resource type="Environment" uid="uid://cek87x2wjei0u" path="res://addons/assetplacer/asset_palette/preview_generation/preview_environment.tres" id="1_k3yl2"]
-[ext_resource type="Script" uid="uid://83wendrehati" path="res://addons/assetplacer/asset_palette/preview_generation/preview_rendering_viewport.gd" id="1_kabtj"]
-[ext_resource type="Script" uid="uid://dtib6m3r4mffe" path="res://addons/assetplacer/asset_palette/preview_generation/preview_camera_3d.gd" id="3_ppe3m"]
+[ext_resource type="Environment" path="res://addons/assetplacer/asset_palette/preview_generation/preview_environment.tres" id="1_k3yl2"]
+[ext_resource type="Script" path="res://addons/assetplacer/asset_palette/preview_generation/preview_rendering_viewport.gd" id="1_kabtj"]
+[ext_resource type="Script" path="res://addons/assetplacer/asset_palette/preview_generation/preview_camera_3d.gd" id="3_ppe3m"]
 
 [sub_resource type="World3D" id="World3D_0rvpv"]
 environment = ExtResource("1_k3yl2")

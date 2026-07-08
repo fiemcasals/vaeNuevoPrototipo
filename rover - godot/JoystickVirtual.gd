@@ -19,14 +19,13 @@ var usando_mouse := false
 @onready var eje_v: ColorRect = $EjeV
 
 
-func _ready():
-	# Ignorar eventos en los hijos visuales para que lleguen al JoystickArea
+func _ready() -> void:
 	for child in get_children():
 		child.mouse_filter = MOUSE_FILTER_IGNORE
 	call_deferred("_posicionar_todo")
 
 
-func _posicionar_todo():
+func _posicionar_todo() -> void:
 	var centro = size / 2.0
 	var diam = radio * 2.0
 	var diam_thumb = radio_thumb * 2.0
@@ -53,7 +52,7 @@ func _posicionar_todo():
 	cruz_v.position = Vector2(diam_thumb / 2.0 - 1.5, diam_thumb * 0.2)
 
 
-func _posicionar_thumb():
+func _posicionar_thumb() -> void:
 	var centro = size / 2.0
 	var desplazamiento = direccion * (radio - radio_thumb)
 	thumb.position = centro - Vector2(radio_thumb, radio_thumb) + desplazamiento
@@ -62,12 +61,12 @@ func _posicionar_thumb():
 	thumb.color = col
 
 
-func _process(_delta):
+func _process(_delta: float) -> void:
 	if activo and usando_mouse:
 		_actualizar(get_local_mouse_position())
 
 
-func _gui_input(event):
+func _gui_input(event: InputEvent) -> void:
 	var centro = size / 2.0
 
 	# ── Mouse (PC) ──
@@ -107,7 +106,7 @@ func _gui_input(event):
 			_actualizar(event.position)
 
 
-func _actualizar(pos: Vector2):
+func _actualizar(pos: Vector2) -> void:
 	var centro = size / 2.0
 	var offset = pos - centro
 	var dist = offset.length()
@@ -118,5 +117,5 @@ func _actualizar(pos: Vector2):
 	_posicionar_thumb()
 
 
-func _on_resized():
+func _on_resized() -> void:
 	_posicionar_todo()

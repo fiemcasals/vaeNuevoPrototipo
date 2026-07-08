@@ -1,6 +1,6 @@
 [gd_scene format=4 uid="uid://s76dw7ggv6g2"]
 
-[ext_resource type="Texture2D" uid="uid://b0dgxx5xepubm" path="res://Modelos3D/Imports/KayKit_City_Builder_Bits_1.0_FREE/Assets/gltf/citybits_texture.png" id="1_df0sj"]
+[ext_resource type="Texture2D" path="res://Modelos3D/Imports/KayKit_City_Builder_Bits_1.0_FREE/Assets/gltf/citybits_texture.png" id="1_df0sj"]
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_scqwh"]
 size = Vector3(3.906189, 3, 2.5)

@@ -78,6 +78,7 @@ config/icon="res://icon.svg"
 SignalBus="*uid://bdfjrirxo0jls"
 RoverConfig="*res://scripts/rover_config.gd"
 Sensor="*uid://cbijv42ghng4l"
+ConfigDebug="*res://ConfigDebug.gd"
 
 [editor_plugins]
 

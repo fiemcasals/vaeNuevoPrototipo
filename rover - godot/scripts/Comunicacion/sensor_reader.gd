@@ -91,8 +91,8 @@ func _procesar_linea(linea: String) -> void:
 		datos_recibidos.emit(datos)
 
 
+## Parsea una trama $VNINS y devuelve un Dictionary o {} si falla.
 func _parsear_vnins(linea: String) -> Dictionary:
-	"""Parsea una trama $VNINS y devuelve un Dictionary o {} si falla."""
 	var partes: PackedStringArray = linea.split(",")
 	if partes.size() < 16 or partes[0] != "$VNINS":
 		return {}

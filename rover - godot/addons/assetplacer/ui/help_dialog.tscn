@@ -1,8 +1,8 @@
 [gd_scene load_steps=4 format=3 uid="uid://w4x0eq4cwmu1"]
 
-[ext_resource type="Script" uid="uid://clcwc5kdkqja" path="res://addons/assetplacer/ui/shortcut_table.gd" id="1_1bn7e"]
-[ext_resource type="Script" uid="uid://b60i62ufwuf2u" path="res://addons/assetplacer/ui/help_dialog.gd" id="1_xcky1"]
-[ext_resource type="Script" uid="uid://ch26sn2w78b6i" path="res://addons/assetplacer/ui/components/link_button.gd" id="2_noe4u"]
+[ext_resource type="Script" path="res://addons/assetplacer/ui/shortcut_table.gd" id="1_1bn7e"]
+[ext_resource type="Script" path="res://addons/assetplacer/ui/help_dialog.gd" id="1_xcky1"]
+[ext_resource type="Script" path="res://addons/assetplacer/ui/components/link_button.gd" id="2_noe4u"]
 
 
 [node name="HelpDialog" type="AcceptDialog"]

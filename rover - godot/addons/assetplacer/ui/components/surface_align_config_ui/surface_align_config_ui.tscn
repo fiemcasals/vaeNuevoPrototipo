@@ -1,6 +1,6 @@
 [gd_scene load_steps=2 format=3 uid="uid://c1n3w7k47o3ot"]
 
-[ext_resource type="Script" uid="uid://brww2a2eushqj" path="res://addons/assetplacer/ui/components/surface_align_config_ui/surface_align_config_ui.gd" id="1_dic0t"]
+[ext_resource type="Script" path="res://addons/assetplacer/ui/components/surface_align_config_ui/surface_align_config_ui.gd" id="1_dic0t"]
 
 [node name="SurfaceAlignConfigUi" type="VBoxContainer" node_paths=PackedStringArray("_align_to_surface_normal_checkbox", "_alignment_direction_option_button")]
 script = ExtResource("1_dic0t")

@@ -3,47 +3,46 @@ extends Node
 var socket = WebSocketPeer.new()
 var url = "ws://10.24.206.226:81" # <-- Reemplaza con la IP de tu ESP
 var conectado = false
-@onready var label_estado = $Label # Asegúrate de que la ruta sea correcta
-@onready var timer_reconexion = $TimerReconexion
-func _ready():
+@onready var label_estado: Label = $Label
+@onready var timer_reconexion: Timer = $TimerReconexion
+func _ready() -> void:
 	print("Conectando al ESP...")
 	var err = socket.connect_to_url(url)
 	if err != OK:
 		print("No se pudo iniciar la conexión: ", err)
 		set_process(false)
-	# Conectamos la señal del Timer por código
 	timer_reconexion.timeout.connect(_intentar_conexion)
 	_intentar_conexion()
-# ¡Esta función detecta cuándo minimizas o maximizas la app!
-func _notification(what):
+
+func _notification(what: int) -> void:
 	if what == NOTIFICATION_APPLICATION_FOCUS_IN:
 		print("La app volvió a primer plano. Verificando estado real...")
 		_forzar_verificacion_red()
 
-func _forzar_verificacion_red():
-	# Hacemos un poll manual inmediato para actualizar el estado del socket
+func _forzar_verificacion_red() -> void:
 	socket.poll()
 	var state = socket.get_ready_state()
 	
-	# Si regresamos del segundo plano y el estado ya no es OPEN, limpiamos todo
 	if state != WebSocketPeer.STATE_OPEN:
 		print("Conexión fantasma detectada tras minimizar. Reseteando...")
 		_limpiar_y_reconnect()
-func _limpiar_y_reconnect():
-	socket.close() # Cerramos formalmente cualquier rastro del socket anterior
+
+func _limpiar_y_reconnect() -> void:
+	socket.close()
 	conectado = false
 	if timer_reconexion.is_stopped():
 		timer_reconexion.start()
-func _intentar_conexion():
+
+func _intentar_conexion() -> void:
 	var state = socket.get_ready_state()
-	# Si está cerrado, intentamos conectar
 	if state == WebSocketPeer.STATE_CLOSED:
 		print("Intentando conectar al ESP...")
 		var err = socket.connect_to_url(url)
 		if err != OK:
 			print("Error al iniciar conexión. Reintentando en 3 segundos...")
 			timer_reconexion.start()
-func _process(_delta):
+
+func _process(_delta: float) -> void:
 	socket.poll() # Requerido para mantener vivo el socket y recibir eventos
 	
 	var state = socket.get_ready_state()
@@ -82,7 +81,7 @@ func _process(_delta):
 
 
 # Función para enviar comandos desde Godot (puedes conectarla a un Botón)
-func enviar_comando(comando: String):
+func enviar_comando(comando: String) -> void:
 	if socket.get_ready_state() == WebSocketPeer.STATE_OPEN:
 		socket.send_text(comando)
 		print("Enviado: ", comando)
@@ -90,7 +89,7 @@ func enviar_comando(comando: String):
 		print("No estás conectado al ESP.")
 
 # Ejemplo de prueba con una tecla
-func _input(event):
+func _input(event: InputEvent) -> void:
 	if event.is_action_pressed("ui_accept"): # Tecla Enter / Espacio
 		enviar_comando("ENCENDER")
 

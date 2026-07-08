@@ -1,8 +1,8 @@
 [gd_scene format=4 uid="uid://bh18y6isbatap"]
 
-[ext_resource type="Texture2D" uid="uid://dch67us0wyi8e" path="res://MinesAndCaves_Set_blend_gltf_fbx/textures/Mines_Ground_1k_Diffuse.png" id="1_cls27"]
-[ext_resource type="Texture2D" uid="uid://dert1yelqp2p4" path="res://MinesAndCaves_Set_blend_gltf_fbx/textures/Mines_Ground_1k_Roughness.png" id="2_d12jj"]
-[ext_resource type="Texture2D" uid="uid://drbrxo86jbt4l" path="res://MinesAndCaves_Set_blend_gltf_fbx/textures/Mines_Ground_1k_Normal.png" id="3_k0gqv"]
+[ext_resource type="Texture2D" path="res://Modelos3D/Imports/MinesAndCaves_Set_blend_gltf_fbx/Textures/Mines_Ground_1k_Diffuse.png" id="1_cls27"]
+[ext_resource type="Texture2D" path="res://Modelos3D/Imports/MinesAndCaves_Set_blend_gltf_fbx/Textures/Mines_Ground_1k_Roughness.png" id="2_d12jj"]
+[ext_resource type="Texture2D" path="res://Modelos3D/Imports/MinesAndCaves_Set_blend_gltf_fbx/Textures/Mines_Ground_1k_Normal.png" id="3_k0gqv"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_hftc7"]
 resource_name = "Mines_Ground"

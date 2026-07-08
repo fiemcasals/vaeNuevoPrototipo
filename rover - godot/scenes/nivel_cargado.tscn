@@ -1,27 +1,28 @@
 [gd_scene format=3 uid="uid://dmlim0ohbi7b5"]
 
-[ext_resource type="Script" uid="uid://koq4nwrm5ehx" path="res://scripts/rover_auto_controller.gd" id="1_auto_ctrl"]
-[ext_resource type="Script" uid="uid://cf4xlpxpral24" path="res://Modelos3D/Usuario/camera_3d.gd" id="1_cam_seguimiento"]
-[ext_resource type="Script" uid="uid://cpb4devun8apa" path="res://scripts/camara_superior.gd" id="1_cam_superior"]
-[ext_resource type="Script" uid="uid://b2geqymnq1suh" path="res://scripts/creador_de_lvl.gd" id="1_creador"]
-[ext_resource type="Script" uid="uid://du1n0kbkw6ehp" path="res://scripts/nivel_cargado.gd" id="1_nav"]
-[ext_resource type="Script" uid="uid://xi0otqwptoll" path="res://scripts/navigation_system.gd" id="1_navigation"]
-[ext_resource type="Script" uid="uid://ipsnmfnhuq6i" path="res://scripts/path_visualizer.gd" id="1_path_vis"]
-[ext_resource type="Script" uid="uid://dtchivloylr60" path="res://scripts/target_selector.gd" id="1_target_selector"]
+[ext_resource type="Script" path="res://scripts/rover_auto_controller.gd" id="1_auto_ctrl"]
+[ext_resource type="Script" path="res://Modelos3D/Usuario/camera_3d.gd" id="1_cam_seguimiento"]
+[ext_resource type="Script" path="res://scripts/camara_superior.gd" id="1_cam_superior"]
+[ext_resource type="Script" path="res://scripts/camera_libre.gd" id="1_cam_libre"]
+[ext_resource type="Script" path="res://scripts/creador_de_lvl.gd" id="1_creador"]
+[ext_resource type="Script" path="res://scripts/nivel_cargado.gd" id="1_nav"]
+[ext_resource type="Script" path="res://scripts/navigation_system.gd" id="1_navigation"]
+[ext_resource type="Script" path="res://scripts/path_visualizer.gd" id="1_path_vis"]
+[ext_resource type="Script" path="res://scripts/target_selector.gd" id="1_target_selector"]
 [ext_resource type="Script" path="res://scripts/camera_transparency.gd" id="1_cam_transparency"]
 [ext_resource type="ShaderMaterial" path="res://shaders/transparent_hole_material.tres" id="1_transparent_mat"]
-[ext_resource type="PackedScene" uid="uid://c6dybhv4bqb1y" path="res://Modelos3D/Usuario/Rover2.tscn" id="2_rover"]
-[ext_resource type="PackedScene" uid="uid://crtqig5l16ktu" path="res://Modelos3D/Roads/road.tscn" id="3_road"]
-[ext_resource type="PackedScene" uid="uid://80ks7b2a72xf" path="res://Modelos3D/Roads/cruce.tscn" id="4_cruce"]
-[ext_resource type="PackedScene" uid="uid://cg1yjt3cqfiwg" path="res://Modelos3D/Buildings/BaseCalle.tscn" id="5_basecalle"]
+[ext_resource type="PackedScene" path="res://Modelos3D/Usuario/Rover2.tscn" id="2_rover"]
+[ext_resource type="PackedScene" path="res://Modelos3D/Roads/road.tscn" id="3_road"]
+[ext_resource type="PackedScene" path="res://Modelos3D/Roads/cruce.tscn" id="4_cruce"]
+[ext_resource type="PackedScene" path="res://Modelos3D/Buildings/BaseCalle.tscn" id="5_basecalle"]
 [ext_resource type="PackedScene" path="res://Modelos3D/Buildings/casa1.tscn" id="6_casa1"]
-[ext_resource type="PackedScene" uid="uid://clhnwxhrf77mh" path="res://Modelos3D/Buildings/casa_2.tscn" id="7_casa2"]
+[ext_resource type="PackedScene" path="res://Modelos3D/Buildings/casa_2.tscn" id="7_casa2"]
 [ext_resource type="PackedScene" path="res://Modelos3D/Buildings/casa_3.tscn" id="8_casa3"]
 [ext_resource type="PackedScene" path="res://Modelos3D/Buildings/casa_4.tscn" id="9_casa4"]
 [ext_resource type="PackedScene" path="res://Modelos3D/Buildings/casa_5.tscn" id="10_casa5"]
 [ext_resource type="PackedScene" path="res://Modelos3D/Buildings/casa_6.tscn" id="11_casa6"]
-[ext_resource type="PackedScene" uid="uid://d1cxrjea2fvkv" path="res://Modelos3D/Buildings/casa_7.tscn" id="12_casa7"]
-[ext_resource type="PackedScene" uid="uid://c8be2qv8avhdo" path="res://Modelos3D/Buildings/casa_8.tscn" id="13_casa8"]
+[ext_resource type="PackedScene" path="res://Modelos3D/Buildings/casa_7.tscn" id="12_casa7"]
+[ext_resource type="PackedScene" path="res://Modelos3D/Buildings/casa_8.tscn" id="13_casa8"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_1"]
 sky_horizon_color = Color(0.66, 0.67, 0.69, 1)
@@ -89,6 +90,10 @@ offset = Vector3(0, 5, -5)
 [node name="CamaraSeguimiento" type="Camera3D" parent="." unique_id=750659299]
 transform = Transform3D(-1, 0, -8.742278e-08, -2.1832776e-08, 0.9683135, 0.24973784, 8.4652655e-08, 0.24973784, -0.9683135, 0, 0.5871639, -1.5396068)
 script = ExtResource("1_cam_seguimiento")
+
+[node name="CamaraLibre" type="Camera3D" parent="." unique_id=750659300]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 8, 10)
+script = ExtResource("1_cam_libre")
 
 [node name="UIOverlay" type="CanvasLayer" parent="." unique_id=349685621]
 

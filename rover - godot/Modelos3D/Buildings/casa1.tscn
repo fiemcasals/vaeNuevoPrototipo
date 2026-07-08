@@ -1,6 +1,6 @@
 [gd_scene format=4 uid="uid://c6uylvpbp8k6s"]
 
-[ext_resource type="Texture2D" uid="uid://b0dgxx5xepubm" path="res://Modelos3D/Imports/KayKit_City_Builder_Bits_1.0_FREE/Assets/gltf/citybits_texture.png" id="1_a17a5"]
+[ext_resource type="Texture2D" path="res://Modelos3D/Imports/KayKit_City_Builder_Bits_1.0_FREE/Assets/gltf/citybits_texture.png" id="1_a17a5"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_4d8fc"]
 resource_name = "citybits_texture"

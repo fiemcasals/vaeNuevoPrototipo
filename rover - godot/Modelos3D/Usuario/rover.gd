@@ -7,8 +7,8 @@ extends CharacterBody3D
 @export var Rotation_Speed: float = 8.0
 @export var Acceleration: float = 4.0  # how fast it speeds up
 @export var Friction: float = 6.0      # how fast it slows down
-var turning_dir=0.0
-var movement=0.0
+var turning_dir: float = 0.0
+var movement: float = 0.0
 var current_speed := 0.0 
 @onready var wheel_pivot: Node3D = $WheelPivot
 @onready var wheel_pivot_2: Node3D = $WheelPivot2

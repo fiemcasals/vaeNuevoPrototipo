@@ -1,6 +1,6 @@
 [gd_scene format=4 uid="uid://crtqig5l16ktu"]
 
-[ext_resource type="Texture2D" uid="uid://bwkj558rsbgqd" path="res://Modelos3D/Imports/KayKit_City_Builder_Bits_1.0_FREE/Assets/gltf/citybits_texture.png" id="1_x0d2t"]
+[ext_resource type="Texture2D" path="res://Modelos3D/Imports/KayKit_City_Builder_Bits_1.0_FREE/Assets/gltf/citybits_texture.png" id="1_x0d2t"]
 
 [sub_resource type="PhysicsMaterial" id="PhysicsMaterial_dfifn"]
 friction = 0.5

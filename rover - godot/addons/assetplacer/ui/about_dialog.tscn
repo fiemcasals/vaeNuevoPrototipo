@@ -1,9 +1,9 @@
 [gd_scene format=3 uid="uid://b7g0dh71q4uca"]
 
-[ext_resource type="Script" uid="uid://bya20c8hg4jy2" path="res://addons/assetplacer/ui/about_dialog.gd" id="1_faw6c"]
-[ext_resource type="Script" uid="uid://smgkiib4ox8l" path="res://addons/assetplacer/ui/components/tag_label.gd" id="2_gxdc7"]
-[ext_resource type="Texture2D" uid="uid://wfae4eq4ugjh" path="res://addons/assetplacer/ui/icons/AboutBanner.jpg" id="2_ne6u1"]
-[ext_resource type="Script" uid="uid://ch26sn2w78b6i" path="res://addons/assetplacer/ui/components/link_button.gd" id="3_xkax2"]
+[ext_resource type="Script" path="res://addons/assetplacer/ui/about_dialog.gd" id="1_faw6c"]
+[ext_resource type="Script" path="res://addons/assetplacer/ui/components/tag_label.gd" id="2_gxdc7"]
+[ext_resource type="Texture2D" path="res://addons/assetplacer/ui/icons/AboutBanner.jpg" id="2_ne6u1"]
+[ext_resource type="Script" path="res://addons/assetplacer/ui/components/link_button.gd" id="3_xkax2"]
 
 [sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_ne6u1"]
 

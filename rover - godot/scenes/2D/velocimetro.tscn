@@ -1,8 +1,8 @@
 [gd_scene format=3 uid="uid://cwhow7yo74317"]
 
-[ext_resource type="Script" uid="uid://dnvr8et4cmqu8" path="res://scenes/2D/velocimetro.gd" id="1_80sj4"]
-[ext_resource type="Texture2D" uid="uid://d2it0pkn27v2m" path="res://Imagenes2D/speedometer1.png" id="1_0285k"]
-[ext_resource type="Texture2D" uid="uid://doapm38o5cblq" path="res://Imagenes2D/needlelong2.png" id="2_80sj4"]
+[ext_resource type="Script" path="res://scenes/2D/velocimetro.gd" id="1_80sj4"]
+[ext_resource type="Texture2D" path="res://Imagenes2D/speedometer1.png" id="1_0285k"]
+[ext_resource type="Texture2D" path="res://Imagenes2D/needlelong2.png" id="2_80sj4"]
 
 [node name="Velocimetro" type="Control" unique_id=668532805]
 layout_mode = 3

@@ -1,11 +1,11 @@
 [gd_scene load_steps=10 format=3 uid="uid://qmg4466g8kev"]
 
-[ext_resource type="Script" uid="uid://bp3ta5gv03q0i" path="res://addons/assetplacer/ui/asset_palette_view.gd" id="1_fijid"]
-[ext_resource type="PackedScene" uid="uid://bu8c30mhig5rs" path="res://addons/assetplacer/ui/assetplacer_button.tscn" id="4_swhud"]
-[ext_resource type="Script" uid="uid://dk0xukvlwoy14" path="res://addons/assetplacer/ui/asset_drop_panel.gd" id="5_nt1iq"]
-[ext_resource type="Script" uid="uid://diwnrrjm4x5o" path="res://addons/assetplacer/ui/components/editor_line_edit.gd" id="6_teamq"]
-[ext_resource type="Script" uid="uid://by8oqmfjl2ehq" path="res://addons/assetplacer/ui/save_asset_library_dialog.gd" id="7_01run"]
-[ext_resource type="Script" uid="uid://bus6mbek3yr3p" path="res://addons/assetplacer/ui/components/right_click_popup.gd" id="8_fvr8p"]
+[ext_resource type="Script" path="res://addons/assetplacer/ui/asset_palette_view.gd" id="1_fijid"]
+[ext_resource type="PackedScene" path="res://addons/assetplacer/ui/assetplacer_button.tscn" id="4_swhud"]
+[ext_resource type="Script" path="res://addons/assetplacer/ui/asset_drop_panel.gd" id="5_nt1iq"]
+[ext_resource type="Script" path="res://addons/assetplacer/ui/components/editor_line_edit.gd" id="6_teamq"]
+[ext_resource type="Script" path="res://addons/assetplacer/ui/save_asset_library_dialog.gd" id="7_01run"]
+[ext_resource type="Script" path="res://addons/assetplacer/ui/components/right_click_popup.gd" id="8_fvr8p"]
 
 [sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_sdpag"]
 

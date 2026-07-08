@@ -1,6 +1,6 @@
 [gd_scene format=3 uid="uid://dh28uypqv6yfi"]
 
-[ext_resource type="PackedScene" uid="uid://dtykbxmhjaqix" path="res://KayKit_City_Builder_Bits_1.0_FREE/Assets/gltf/firehydrant.gltf" id="1_3jtv4"]
+[ext_resource type="PackedScene" path="res://Modelos3D/Imports/KayKit_City_Builder_Bits_1.0_FREE/Assets/gltf/firehydrant.gltf" id="1_3jtv4"]
 
 [node name="firehydrant2" unique_id=1628519661 instance=ExtResource("1_3jtv4")]
 

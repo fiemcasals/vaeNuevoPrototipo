@@ -1,6 +1,6 @@
 [gd_scene format=3 uid="uid://w4tuk2xgvtrg"]
 
-[ext_resource type="Script" uid="uid://cw7sc1t4tb7sy" path="res://zona_especial.gd" id="1_dhl63"]
+[ext_resource type="Script" path="res://zona_especial.gd" id="1_dhl63"]
 
 [node name="ZonaEspecial" type="Area3D" unique_id=1883542457]
 collision_layer = 4

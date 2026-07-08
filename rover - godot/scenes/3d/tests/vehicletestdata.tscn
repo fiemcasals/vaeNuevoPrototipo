@@ -1,7 +1,7 @@
 [gd_scene format=3 uid="uid://dlyqiw2y1vv28"]
 
-[ext_resource type="ArrayMesh" uid="uid://ddythyj1yo4cj" path="res://Modelos3D/Imports/KayKit_City_Builder_Bits_1.0_FREE/Assets/obj/car_sedan.obj" id="1_eo4ah"]
-[ext_resource type="Script" uid="uid://b3p4xncrcmnwg" path="res://scripts/vehicle/vehicle.gd" id="2_dn4nt"]
+[ext_resource type="ArrayMesh" path="res://Modelos3D/Imports/KayKit_City_Builder_Bits_1.0_FREE/Assets/obj/car_sedan.obj" id="1_eo4ah"]
+[ext_resource type="Script" path="res://scripts/vehicle/vehicle.gd" id="2_dn4nt"]
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_eo4ah"]
 size = Vector3(1, 0.30810547, 0.91503906)

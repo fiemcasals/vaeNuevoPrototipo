@@ -2,18 +2,18 @@ extends Control
 
 const MENU_PATH = "res://scenes/menu_principal.tscn"
 
-@onready var spin_peso = $ScrollContainer/VBoxContainer/PesoContainer/SpinBox
-@onready var spin_velocidad = $ScrollContainer/VBoxContainer/VelocidadContainer/SpinBox
-@onready var spin_aceleracion = $ScrollContainer/VBoxContainer/AceleracionContainer/SpinBox
-@onready var spin_torque = $ScrollContainer/VBoxContainer/TorqueContainer/SpinBox
-@onready var spin_ancho = $ScrollContainer/VBoxContainer/AnchoContainer/SpinBox
-@onready var spin_largo = $ScrollContainer/VBoxContainer/LargoContainer/SpinBox
-@onready var spin_ancho_ruedas = $ScrollContainer/VBoxContainer/AnchoRuedasContainer/SpinBox
-@onready var spin_distancia_ejes = $ScrollContainer/VBoxContainer/DistanciaEjesContainer/SpinBox
-@onready var spin_distancia_ruedas = $ScrollContainer/VBoxContainer/DistanciaRuedasContainer/SpinBox
-@onready var spin_margen = $ScrollContainer/VBoxContainer/MargenContainer/SpinBox
-@onready var btn_guardar = $ScrollContainer/VBoxContainer/BtnGuardar
-@onready var btn_volver = $ScrollContainer/VBoxContainer/BtnVolver
+@onready var spin_peso: SpinBox = $ScrollContainer/VBoxContainer/PesoContainer/SpinBox
+@onready var spin_velocidad: SpinBox = $ScrollContainer/VBoxContainer/VelocidadContainer/SpinBox
+@onready var spin_aceleracion: SpinBox = $ScrollContainer/VBoxContainer/AceleracionContainer/SpinBox
+@onready var spin_torque: SpinBox = $ScrollContainer/VBoxContainer/TorqueContainer/SpinBox
+@onready var spin_ancho: SpinBox = $ScrollContainer/VBoxContainer/AnchoContainer/SpinBox
+@onready var spin_largo: SpinBox = $ScrollContainer/VBoxContainer/LargoContainer/SpinBox
+@onready var spin_ancho_ruedas: SpinBox = $ScrollContainer/VBoxContainer/AnchoRuedasContainer/SpinBox
+@onready var spin_distancia_ejes: SpinBox = $ScrollContainer/VBoxContainer/DistanciaEjesContainer/SpinBox
+@onready var spin_distancia_ruedas: SpinBox = $ScrollContainer/VBoxContainer/DistanciaRuedasContainer/SpinBox
+@onready var spin_margen: SpinBox = $ScrollContainer/VBoxContainer/MargenContainer/SpinBox
+@onready var btn_guardar: Button = $ScrollContainer/VBoxContainer/BtnGuardar
+@onready var btn_volver: Button = $ScrollContainer/VBoxContainer/BtnVolver
 
 func _ready() -> void:
 	_cargar_valores()

@@ -1,6 +1,6 @@
 [gd_scene format=3 uid="uid://214tefdfo46y"]
 
-[ext_resource type="Script" uid="uid://d0g76oeqibgq1" path="res://Modelos3D/Usuario/rover.gd" id="1_fxoct"]
+[ext_resource type="Script" path="res://Modelos3D/Usuario/rover.gd" id="1_fxoct"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_jfj6g"]
 albedo_color = Color(7.219613e-08, 0.22970068, 0.024195304, 1)

@@ -6,7 +6,7 @@ extends Control
 @export var max_speed: float = 120.0  # adjust to match your speedometer's max km/h label
 @export var speed_text:String
 @export var Visor_Vel:RichTextLabel
-func _process(delta: float) -> void:
+func _process(_delta: float) -> void:
 	if not vehicle:
 		return
 	var speed_ms = vehicle.linear_velocity.length()

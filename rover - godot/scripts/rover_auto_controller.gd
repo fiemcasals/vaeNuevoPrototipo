@@ -86,7 +86,10 @@ func _process(delta: float):
 func _connect_to_server():
 	print("[Autopilot] Conectando al cerebro pps-vae en ", remote_url)
 	_ws_connected = false
-	var err = _ws_client.connect_to_url(remote_url)
+	var err = null
+	if (_ws_client.get_ready_state() == WebSocketPeer.STATE_CLOSED || _ws_client.get_ready_state() == WebSocketPeer.STATE_CLOSING):
+		print("[Autopilot] Cerrando conexión WebSocket existente...")
+		err = _ws_client.connect_to_url(remote_url)
 	if err != OK:
 		print("[Autopilot] Error al intentar iniciar conexión WebSocket: ", err)
 
@@ -419,8 +422,10 @@ func _send_telemetry_to_remote():
 		"x": rover.global_position.x,
 		"z": rover.global_position.z,
 		"heading": server_heading,
-		"speed": speed_val,
-		"evasion": {
+		"speed": speed_val
+	}
+	if ConfigDebug and ConfigDebug.enviar_evasion_brain:
+		message["evasion"] = {
 			"inner_count": rover.cuerpos_interna.size(),
 			"middle_count": rover.cuerpos_intermedia.size(),
 			"outer_count": rover.cuerpos_externa.size(),
@@ -429,7 +434,6 @@ func _send_telemetry_to_remote():
 			"retrocediendo": rover.evasion_retrocediendo,
 			"nivel_zona": rover.evasion_nivel_zona
 		}
-	}
 	_ws_client.send_text(JSON.stringify(message))
 
 func _read_messages_from_server(delta: float):
@@ -487,34 +491,33 @@ func _read_messages_from_server(delta: float):
 			elif msg_type == "orders":
 				if not is_active:
 					continue
-					
+				
 				if data.has("completed") and data["completed"]:
 					print("[Autopilot] Destino alcanzado (Cerebro pps-vae).")
 					stop(false)
 					if navigation:
 						navigation.target_reached.emit()
 					return
-					
-			var direction_val = data.get("direction", 1)
-			var target_steering = data.get("steering", 0.0)
-			var engine_force = data.get("engine_force", 0.0)
-			var brake_val = data.get("brake", 0.0)
-			
-			# Apply steering with wheel physical speed limits
-			var steering_speed = 4.0
-			rover.steering = move_toward(rover.steering, target_steering, steering_speed * delta)
-			
-			# Apply forces: negate engine_force by direction (convención del sistema)
-			rover.engine_force = engine_force
-			rover.brake = brake_val
+				
+				var target_steering = data.get("steering", 0.0)
+				var engine_force = data.get("engine_force", 0.0)
+				var brake_val = data.get("brake", 0.0)
+				
+				# Apply steering with wheel physical speed limits
+				var steering_speed = 4.0
+				rover.steering = move_toward(rover.steering, target_steering, steering_speed * delta)
+				
+				# Apply forces: negate engine_force by direction (convención del sistema)
+				rover.engine_force = engine_force
+				rover.brake = brake_val
 				
 				# Update current waypoint index and target point for drawing
-			if data.has("current_waypoint_index"):
-				current_waypoint_index = int(data["current_waypoint_index"])
-			if data.has("target_point") and data["target_point"] != null:
-				var pt = data["target_point"]
-				_target_point_from_server = Vector3(pt["x"], rover.global_position.y, pt["z"])
-				target_position = _target_point_from_server
+				if data.has("current_waypoint_index"):
+					current_waypoint_index = int(data["current_waypoint_index"])
+				if data.has("target_point") and data["target_point"] != null:
+					var pt = data["target_point"]
+					_target_point_from_server = Vector3(pt["x"], rover.global_position.y, pt["z"])
+					target_position = _target_point_from_server
 
 func _draw_visuals():
 	var points = PackedVector3Array()
@@ -661,63 +664,62 @@ func _drive_forward(distance_to_final: float):
 		rover.brake = min(brake_strength, 35.0)
 
 func _process_remote_path(raw_path: Array) -> Array[Vector3]:
-	var shifted_positions: Array[Vector3] = []
+	var positions: Array[Vector3] = []
 	if raw_path.size() == 0:
-		return shifted_positions
-		
-	# 1. Aplicar desplazamiento de carril (lane shift) a cada punto del camino remoto
-	for i in range(raw_path.size()):
-		var pt = raw_path[i]
-		var pos = Vector3(pt["x"], rover.global_position.y if rover else 0.38, pt["z"])
-		
-		# Determinar dirección para calcular el desplazamiento del carril
-		var dir = Vector2.UP
-		if raw_path.size() > 1:
-			if i == 0:
-				dir = Vector2(raw_path[1]["x"] - raw_path[0]["x"], raw_path[1]["z"] - raw_path[0]["z"]).normalized()
-			elif i == raw_path.size() - 1:
-				dir = Vector2(raw_path[i]["x"] - raw_path[i-1]["x"], raw_path[i]["z"] - raw_path[i-1]["z"]).normalized()
-			else:
-				# Dirección del segmento actual
-				dir = Vector2(raw_path[i+1]["x"] - raw_path[i]["x"], raw_path[i+1]["z"] - raw_path[i]["z"]).normalized()
-				
-		var cell_curr = Vector2i(
-			round(pos.x / navigation.tile_spacing),
-			round(pos.z / navigation.tile_spacing)
-		)
-		
-		var shift = _get_lane_shift(cell_curr, dir)
-		shifted_positions.append(pos + shift)
-		
-	# 2. Acortar el último segmento para detenerse antes del destino final
-	if shifted_positions.size() >= 2:
-		var last_idx = shifted_positions.size() - 1
-		var segment = shifted_positions[last_idx] - shifted_positions[last_idx - 1]
+		return positions
+	
+	for pt in raw_path:
+		positions.append(Vector3(pt["x"], rover.global_position.y if rover else 0.38, pt["z"]))
+	
+	if ConfigDebug and ConfigDebug.lane_shift_activado:
+		for i in range(raw_path.size()):
+			var pos = positions[i]
+			
+			var dir = Vector2.UP
+			if raw_path.size() > 1:
+				if i == 0:
+					dir = Vector2(raw_path[1]["x"] - raw_path[0]["x"], raw_path[1]["z"] - raw_path[0]["z"]).normalized()
+				elif i == raw_path.size() - 1:
+					dir = Vector2(raw_path[i]["x"] - raw_path[i-1]["x"], raw_path[i]["z"] - raw_path[i-1]["z"]).normalized()
+				else:
+					dir = Vector2(raw_path[i+1]["x"] - raw_path[i]["x"], raw_path[i+1]["z"] - raw_path[i]["z"]).normalized()
+					
+			var cell_curr = Vector2i(
+				round(pos.x / navigation.tile_spacing),
+				round(pos.z / navigation.tile_spacing)
+			)
+			
+			var shift = _get_lane_shift(cell_curr, dir)
+			positions[i] = pos + shift
+	
+	if ConfigDebug and ConfigDebug.acortar_ruta_activado and positions.size() >= 2:
+		var last_idx = positions.size() - 1
+		var segment = positions[last_idx] - positions[last_idx - 1]
 		var segment_len = segment.length()
 		var dir = segment.normalized()
 		var shorten_dist = min(1.0, segment_len * 0.5)
-		shifted_positions[last_idx] = shifted_positions[last_idx] - dir * shorten_dist
-		
-	# 3. Detectar esquinas en base al camino desplazado
-	is_actual_corner.resize(shifted_positions.size())
+		positions[last_idx] = positions[last_idx] - dir * shorten_dist
+	
+	is_actual_corner.resize(positions.size())
 	is_actual_corner.fill(false)
-	is_corner_waypoint.resize(shifted_positions.size())
+	is_corner_waypoint.resize(positions.size())
 	is_corner_waypoint.fill(false)
 	
-	for i in range(1, shifted_positions.size() - 1):
-		var v1 = (shifted_positions[i] - shifted_positions[i-1]).normalized()
-		var v2 = (shifted_positions[i+1] - shifted_positions[i]).normalized()
+	for i in range(1, positions.size() - 1):
+		var v1 = (positions[i] - positions[i-1]).normalized()
+		var v2 = (positions[i+1] - positions[i]).normalized()
 		var dot = v1.dot(v2)
 		if dot < 0.9:
 			is_actual_corner[i] = true
 			is_corner_waypoint[i] = true
 			is_corner_waypoint[i-1] = true
-			if i + 1 < shifted_positions.size():
+			if i + 1 < positions.size():
 				is_corner_waypoint[i+1] = true
-				
-	# 4. Aplicar suavizado binomial preservando las esquinas detectadas
-	var smoothed_positions = _smooth_path_preserving_corners(shifted_positions, is_actual_corner, 1)
-	return smoothed_positions
+	
+	if ConfigDebug and ConfigDebug.suavizado_ruta_activado:
+		return _smooth_path_preserving_corners(positions, is_actual_corner, 1)
+	
+	return positions
 
 func _log_vehicle_status(delta: float):
 	_total_time += delta
@@ -760,8 +762,8 @@ func _log_vehicle_status(delta: float):
 func _aplicar_evasion() -> void:
 	if not rover:
 		return
+	var ev_dir = rover.get("direccion_evasion")
 	if rover.get("evasion_retrocediendo") and rover.get("evasion_retrocediendo") == true:
-		var ev_dir = rover.get("direccion_evasion")
 		rover.engine_force = -RoverConfig.torque * 0.6 if RoverConfig else -180.0
 		rover.brake = 0.0
 		if ev_dir:
@@ -769,7 +771,6 @@ func _aplicar_evasion() -> void:
 		return
 	
 	var ev_freno = rover.get("freno_evasion")
-	var ev_dir = rover.get("direccion_evasion")
 	if ev_freno == null or ev_dir == null:
 		return
 	if ev_freno > 0.0:

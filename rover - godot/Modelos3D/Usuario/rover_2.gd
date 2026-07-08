@@ -1,13 +1,13 @@
 extends VehicleBody3D
 class_name Rover
 
-@export var max_steer = 0.4
-@export var brake_force = 20.0
-@export var handbrake_force = 100.0
-@export var steer_speed = 8.0
-@export var deadzone = 0.15
-@export var input_curve = 2.0
-@export var speed_steer_limit = 0.3
+@export var max_steer: float = 0.4
+@export var brake_force: float = 20.0
+@export var handbrake_force: float = 100.0
+@export var steer_speed: float = 8.0
+@export var deadzone: float = 0.15
+@export var input_curve: float = 2.0
+@export var speed_steer_limit: float = 0.3
 
 @export var r_trasera_iz: VehicleWheel3D = null
 @export var r_trasera_der: VehicleWheel3D = null
@@ -15,9 +15,9 @@ class_name Rover
 
 # Zonas de evasion circular
 @export var evasion_activada: bool = true
-@export var radio_interno: float = 1.5
-@export var radio_intermedio: float = 2.5
-@export var radio_externo: float = 5.0
+@export var radio_interno: float = 0.1
+@export var radio_intermedio: float = 0.3
+@export var radio_externo: float = 0.5
 @export var altura_zona: float = 5.0
 @export var mostrar_gizmos: bool = true
 @export_group("Colores Gizmos")
@@ -36,12 +36,19 @@ var cuerpos_externa: Array = []
 var direccion_evasion: Vector3 = Vector3.ZERO
 var freno_evasion: float = 0.0
 var evasion_retrocediendo: bool = false
+var evasion_fase: int = 0
+var evasion_timer_freno: float = 0.0
 var evasion_nivel_zona: int = 0
+
+enum FaseEvasion {
+	NINGUNA = 0,
+	FRENANDO = 1,
+	RETROCEDIENDO = 2
+}
 
 var panel_evasion: Control
 var panel_visible: bool = false
 
-var current_cam:int=3
 var auto_controlled: bool = false
 var mud_zones: Array = []
 
@@ -187,7 +194,6 @@ func _physics_process(delta: float) -> void:
 	var is_handbraking = Input.is_action_pressed("handbrake")
 	
 	var in_mud = mud_zones.size() > 0
-	var current_max_speed = 5.0 if in_mud else max_speed
 	var engine_multiplier = 0.3 if in_mud else 1.0
 	var brake_multiplier = 15.0 if in_mud else 1.0
 
@@ -251,15 +257,6 @@ func _input(event: InputEvent) -> void:
 	if RoverConfig and RoverConfig.op_mode == "turret":
 		if event is InputEventMouseMotion and (Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT) or Input.is_mouse_button_pressed(MOUSE_BUTTON_RIGHT)):
 			_mouse_relative = event.relative
-			
-	if event.is_action_pressed("switch_cam"):
-		match current_cam:
-			1:
-				current_cam=3
-				SignalBus.change_cam.emit(current_cam)
-			3:
-				current_cam=1
-				SignalBus.change_cam.emit(current_cam)
 	
 	if event.is_action_pressed("ui_home"):
 		if panel_evasion:
@@ -300,7 +297,7 @@ func _crear_zona(radio: float, color: Color, metodo_enter: String, metodo_exit: 
 	area.body_entered.connect(Callable(self, metodo_enter))
 	area.body_exited.connect(Callable(self, metodo_exit))
 	
-	if mostrar_gizmos:
+	if ConfigDebug.evasion_mostrar_gizmos:
 		var ring = MeshInstance3D.new()
 		ring.name = "AnilloVisual"
 		var ring_mesh = CylinderMesh.new()
@@ -369,18 +366,18 @@ func _crear_panel_evasion() -> void:
 	content.add_theme_constant_override("separation", 8)
 	scroll.add_child(content)
 	
-	_agregar_slider(content, "Interna (Rojo)", radio_interno, color_interno, 0.0, 2.0,
+	_agregar_slider(content, "Interna (Rojo)", radio_interno, color_interno, 0.0, 1.0,
 		func(v): radio_interno = v; _actualizar_zona(zona_interna, v))
-	_agregar_slider(content, "Intermedia (Naranja)", radio_intermedio, color_intermedio, 1.0, 4.0,
+	_agregar_slider(content, "Intermedia (Naranja)", radio_intermedio, color_intermedio, 0.0, 2.0,
 		func(v): radio_intermedio = v; _actualizar_zona(zona_intermedia, v))
-	_agregar_slider(content, "Externa (Azul)", radio_externo, color_externo, 1.0, 8.0,
+	_agregar_slider(content, "Externa (Azul)", radio_externo, color_externo, 0.0, 4.0,
 		func(v): radio_externo = v; _actualizar_zona(zona_externa, v))
 	
 	var activar_check = CheckBox.new()
 	activar_check.name = "ActivarEvasion"
 	activar_check.text = "Evasion activada"
-	activar_check.button_pressed = evasion_activada
-	activar_check.toggled.connect(func(v): evasion_activada = v)
+	activar_check.button_pressed = ConfigDebug.evasion_zonas_activada
+	activar_check.toggled.connect(func(v): ConfigDebug.evasion_zonas_activada = v)
 	content.add_child(activar_check)
 
 func _agregar_slider(parent: Control, label_text: String, valor: float, color: Color, min_v: float, max_v: float, callback: Callable) -> void:
@@ -449,11 +446,13 @@ func _on_zona_interna_exited(body: Node) -> void:
 	cuerpos_interna.erase(body)
 
 func _procesar_evasion(delta: float) -> void:
-	if not evasion_activada:
+	if not ConfigDebug.evasion_zonas_activada:
 		direccion_evasion = Vector3.ZERO
 		freno_evasion = 0.0
 		evasion_nivel_zona = 0
 		evasion_retrocediendo = false
+		evasion_fase = FaseEvasion.NINGUNA
+		evasion_timer_freno = 0.0
 		return
 	
 	var vector_evasion = Vector3.ZERO
@@ -507,11 +506,32 @@ func _procesar_evasion(delta: float) -> void:
 		if frontal < 0:
 			freno_evasion = 0.0
 		
-		if nivel_zona >= 3:
+		if nivel_zona >= 3 and ConfigDebug.evasion_reversa_activada:
 			var speed = linear_velocity.length()
-			if speed < 0.5:
-				evasion_retrocediendo = true
+			match evasion_fase:
+				FaseEvasion.NINGUNA:
+					evasion_fase = FaseEvasion.FRENANDO
+					evasion_timer_freno = 0.0
+					direccion_evasion = Vector3.ZERO
+				FaseEvasion.FRENANDO:
+					direccion_evasion = Vector3.ZERO
+					freno_evasion = brake_force * 2.0
+					if speed < 0.3:
+						evasion_timer_freno += delta
+						if evasion_timer_freno > 0.5:
+							evasion_fase = FaseEvasion.RETROCEDIENDO
+							evasion_retrocediendo = true
+					else:
+						evasion_timer_freno = 0.0
+				FaseEvasion.RETROCEDIENDO:
+					evasion_retrocediendo = true
+		else:
+			evasion_fase = FaseEvasion.NINGUNA
+			evasion_retrocediendo = false
+			evasion_timer_freno = 0.0
 	else:
 		direccion_evasion = Vector3.ZERO
 		freno_evasion = 0.0
 		evasion_retrocediendo = false
+		evasion_fase = FaseEvasion.NINGUNA
+		evasion_timer_freno = 0.0

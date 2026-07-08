@@ -1,10 +1,10 @@
 [gd_scene format=3 uid="uid://c6dybhv4bqb1y"]
 
-[ext_resource type="Script" uid="uid://osne2eikfuw" path="res://Modelos3D/Usuario/rover_2.gd" id="1_mcu0b"]
-[ext_resource type="Script" uid="uid://dk4dkdr6mdflg" path="res://Modelos3D/Usuario/fpv.gd" id="2_g1q2u"]
-[ext_resource type="Texture2D" uid="uid://d2it0pkn27v2m" path="res://Imagenes2D/speedometer1.png" id="3_s7n2j"]
-[ext_resource type="Texture2D" uid="uid://doapm38o5cblq" path="res://Imagenes2D/needlelong2.png" id="4_4wdio"]
-[ext_resource type="Script" uid="uid://dnvr8et4cmqu8" path="res://scenes/2D/velocimetro.gd" id="5_x1rpy"]
+[ext_resource type="Script" path="res://Modelos3D/Usuario/rover_2.gd" id="1_mcu0b"]
+[ext_resource type="Script" path="res://Modelos3D/Usuario/fpv.gd" id="2_g1q2u"]
+[ext_resource type="Texture2D" path="res://Imagenes2D/speedometer1.png" id="3_s7n2j"]
+[ext_resource type="Texture2D" path="res://Imagenes2D/needlelong2.png" id="4_4wdio"]
+[ext_resource type="Script" path="res://scenes/2D/velocimetro.gd" id="5_x1rpy"]
 
 [sub_resource type="PhysicsMaterial" id="PhysicsMaterial_mcu0b"]
 rough = true

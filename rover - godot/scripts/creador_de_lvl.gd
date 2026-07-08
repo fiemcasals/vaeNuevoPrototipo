@@ -35,7 +35,7 @@ var grid_data: Array = []
 var spawn_cell: Vector2i = Vector2i.ZERO
 
 func _ready() -> void:
-	SignalBus.connect("nivel_seleccionado", Callable(self, "_on_nivel_seleccionado"))
+	SignalBus.nivel_seleccionado.connect(_on_nivel_seleccionado)
 
 	current_level_root = Node3D.new()
 	current_level_root.name = "NivelInstanciado"
@@ -76,7 +76,7 @@ func _cargar_archivo(path: String) -> void:
 		return
 
 	_generar_entorno(data)
-	emit_signal("nivel_generado", path)
+	nivel_generado.emit(path)
 
 func _generar_entorno(data: Dictionary) -> void:
 	if clear_before_generate:
@@ -87,9 +87,15 @@ func _generar_entorno(data: Dictionary) -> void:
 
 	if data.has("tiles"):
 		grid_data = data["tiles"]
+		var rows = data["tiles"].size()
+		var cols = data["tiles"][0].size() if rows > 0 else 0
+		print("Grid cargada: %d columnas x %d filas" % [cols, rows])
 		_generar_tiles_por_matriz(data["tiles"])
 	elif data.has("grid"):
 		grid_data = data["grid"]
+		var rows = data["grid"].size()
+		var cols = data["grid"][0].size() if rows > 0 else 0
+		print("Grid cargada: %d columnas x %d filas" % [cols, rows])
 		_generar_tiles_por_matriz(data["grid"])
 	elif data.has("cells"):
 		_generar_tiles_por_cells(data["cells"])
@@ -105,7 +111,7 @@ func _generar_entorno(data: Dictionary) -> void:
 	elif has_spawn_position:
 		_instanciar_rover(rover_spawn_position)
 
-func _generar_tiles_por_cells(cells) -> void:
+func _generar_tiles_por_cells(cells: Array) -> void:
 	if typeof(cells) != TYPE_ARRAY:
 		return
 
@@ -120,11 +126,11 @@ func _generar_tiles_por_cells(cells) -> void:
 		var tile_id = _tile_id_from_color_array(color_data)
 		_instanciar_tile(tile_id, x, y)
 
-func _es_caminable(tile_value) -> bool:
+func _es_caminable(tile_value: Variant) -> bool:
 	var resolved_id = _get_tile_index(tile_value)
 	return resolved_id in [TILE_TYPE_INDEX["caminable"], TILE_TYPE_INDEX["spawn_point"], TILE_TYPE_INDEX["punto_interes"], TILE_TYPE_INDEX["objetivo"], TILE_TYPE_INDEX["peso_3_4"]]
 
-func _es_barro(tile_value) -> bool:
+func _es_barro(tile_value: Variant) -> bool:
 	var resolved_id = _get_tile_index(tile_value)
 	return resolved_id == TILE_TYPE_INDEX["peso_3_4"]
 
@@ -147,7 +153,18 @@ func _obtener_direcciones_vecinos_caminables(tile_rows: Array, row: int, col: in
 func _son_lados_opuestos(dir1: Vector2i, dir2: Vector2i) -> bool:
 	return (dir1.x + dir2.x == 0) and (dir1.y + dir2.y == 0)
 
-func _generar_tiles_por_matriz(tile_rows) -> void:
+func _nombre_tile(tile_value: Variant, x: int, z: int) -> String:
+	var tipo_str = "desconocido"
+	var resolved = _get_tile_index(tile_value)
+	for key in TILE_TYPE_INDEX:
+		if TILE_TYPE_INDEX[key] == resolved:
+			tipo_str = key
+			break
+	if typeof(tile_value) == TYPE_STRING:
+		tipo_str = str(tile_value).to_lower()
+	return "tile_%s_%d_%d" % [tipo_str, x, z]
+
+func _generar_tiles_por_matriz(tile_rows: Array) -> void:
 	if typeof(tile_rows) != TYPE_ARRAY:
 		push_error("tiles/grid debe ser un Array de filas.")
 		return
@@ -163,17 +180,19 @@ func _generar_tiles_por_matriz(tile_rows) -> void:
 			var resolved_id = _get_tile_index(tile_id)
 			if resolved_id < 0:
 				continue
+			var tile_name = _nombre_tile(tile_id, x_index, z_index)
+			
 			if resolved_id == TILE_TYPE_INDEX["spawn_point"]:
 				has_spawn_position = true
 				rover_spawn_position = Vector3(x_index * tile_spacing, rover_spawn_y, z_index * tile_spacing)
 				spawn_cell = Vector2i(x_index, z_index)
 			
 			if resolved_id == TILE_TYPE_INDEX["spawn_point"]:
-				_instanciar_tile(TILE_SCENE_INDEX["cruce"], x_index, z_index, 0.0, Color.GREEN, false)
+				_instanciar_tile(TILE_SCENE_INDEX["cruce"], x_index, z_index, 0.0, Color.GREEN, false, false, tile_name)
 			elif resolved_id == TILE_TYPE_INDEX["punto_interes"]:
-				_instanciar_tile(TILE_SCENE_INDEX["cruce"], x_index, z_index, 0.0, Color.YELLOW, false)
+				_instanciar_tile(TILE_SCENE_INDEX["cruce"], x_index, z_index, 0.0, Color.YELLOW, false, false, tile_name)
 			elif resolved_id == TILE_TYPE_INDEX["objetivo"]:
-				_instanciar_tile(TILE_SCENE_INDEX["cruce"], x_index, z_index, 0.0, Color.PURPLE, false)
+				_instanciar_tile(TILE_SCENE_INDEX["cruce"], x_index, z_index, 0.0, Color.PURPLE, false, false, tile_name)
 			elif resolved_id == TILE_TYPE_INDEX["peso_3_4"]:
 				var direcciones_vecinos = _obtener_direcciones_vecinos_caminables(tile_rows, z_index, x_index)
 				var num_vecinos = direcciones_vecinos.size()
@@ -185,13 +204,13 @@ func _generar_tiles_por_matriz(tile_rows) -> void:
 						var rotacion = 0.0
 						if dir1.x != 0:
 							rotacion = PI / 2
-						_instanciar_tile(TILE_SCENE_INDEX["road"], x_index, z_index, rotacion, Color.GRAY, true)
+						_instanciar_tile(TILE_SCENE_INDEX["road"], x_index, z_index, rotacion, Color.GRAY, true, false, tile_name)
 					else:
-						_instanciar_tile(TILE_SCENE_INDEX["cruce"], x_index, z_index, 0.0, Color.GRAY, true)
+						_instanciar_tile(TILE_SCENE_INDEX["cruce"], x_index, z_index, 0.0, Color.GRAY, true, false, tile_name)
 				elif num_vecinos > 2:
-					_instanciar_tile(TILE_SCENE_INDEX["cruce"], x_index, z_index, 0.0, Color.GRAY, true)
+					_instanciar_tile(TILE_SCENE_INDEX["cruce"], x_index, z_index, 0.0, Color.GRAY, true, false, tile_name)
 				else:
-					_instanciar_tile(TILE_SCENE_INDEX["road"], x_index, z_index, 0.0, Color.GRAY, true)
+					_instanciar_tile(TILE_SCENE_INDEX["road"], x_index, z_index, 0.0, Color.GRAY, true, false, tile_name)
 			elif _es_caminable(tile_id):
 				var direcciones_vecinos = _obtener_direcciones_vecinos_caminables(tile_rows, z_index, x_index)
 				var num_vecinos = direcciones_vecinos.size()
@@ -203,19 +222,19 @@ func _generar_tiles_por_matriz(tile_rows) -> void:
 						var rotacion = 0.0
 						if dir1.x != 0:
 							rotacion = PI / 2
-						_instanciar_tile(TILE_SCENE_INDEX["road"], x_index, z_index, rotacion, Color.WHITE, false)
+						_instanciar_tile(TILE_SCENE_INDEX["road"], x_index, z_index, rotacion, Color.WHITE, false, false, tile_name)
 					else:
-						_instanciar_tile(TILE_SCENE_INDEX["cruce"], x_index, z_index, 0.0, Color.WHITE, false)
+						_instanciar_tile(TILE_SCENE_INDEX["cruce"], x_index, z_index, 0.0, Color.WHITE, false, false, tile_name)
 				elif num_vecinos > 2:
-					_instanciar_tile(TILE_SCENE_INDEX["cruce"], x_index, z_index, 0.0, Color.WHITE, false)
+					_instanciar_tile(TILE_SCENE_INDEX["cruce"], x_index, z_index, 0.0, Color.WHITE, false, false, tile_name)
 				else:
-					_instanciar_tile(TILE_SCENE_INDEX["road"], x_index, z_index, 0.0, Color.WHITE, false)
+					_instanciar_tile(TILE_SCENE_INDEX["road"], x_index, z_index, 0.0, Color.WHITE, false, false, tile_name)
 			else:
-				_instanciar_tile(TILE_SCENE_INDEX["basecalle"], x_index, z_index, 0.0, Color.WHITE, false)
-				var container_stack = _crear_contenedor_node(x_index, z_index)
+				_instanciar_tile(TILE_SCENE_INDEX["basecalle"], x_index, z_index, 0.0, Color.WHITE, false, false, tile_name)
+				var container_stack = _crear_contenedor_node(x_index, z_index, tile_name)
 				current_level_root.add_child(container_stack)
 
-func _instanciar_tile(tile_value, x_index: int, z_index: int, rotacion_y: float = 0.0, color: Color = Color.WHITE, es_barro: bool = false, es_edificio: bool = false) -> void:
+func _instanciar_tile(tile_value: Variant, x_index: int, z_index: int, rotacion_y: float = 0.0, color: Color = Color.WHITE, es_barro: bool = false, es_edificio: bool = false, nombre: String = "") -> void:
 	var resolved_id: int
 	
 	if typeof(tile_value) == TYPE_INT:
@@ -239,6 +258,9 @@ func _instanciar_tile(tile_value, x_index: int, z_index: int, rotacion_y: float 
 	var instance = scene.instantiate()
 	if instance == null:
 		return
+
+	if nombre != "":
+		instance.name = nombre
 
 	current_level_root.add_child(instance)
 	if instance is Node3D:
@@ -323,7 +345,7 @@ func _tile_id_from_color(color: Color) -> int:
 		return TILE_TYPE_INDEX["objetivo"]
 	return TILE_TYPE_INDEX["no_caminable"]
 
-func _get_tile_index(tile_value) -> int:
+func _get_tile_index(tile_value: Variant) -> int:
 	if typeof(tile_value) == TYPE_INT:
 		return int(tile_value)
 	if typeof(tile_value) == TYPE_STRING:
@@ -347,7 +369,7 @@ func _get_tile_index(tile_value) -> int:
 				return TILE_TYPE_INDEX["objetivo"]
 	return -1
 
-func _instanciar_rover(start_data = null) -> void:
+func _instanciar_rover(start_data: Variant = null) -> void:
 	if rover_scene == null:
 		push_warning("No se asignó rover_scene para instanciar el rover.")
 		return
@@ -368,9 +390,9 @@ func _instanciar_rover(start_data = null) -> void:
 	elif current_rover.has_method("set_position"):
 		current_rover.call("set_position", Vector2(_position.x, _position.z))
 
-	emit_signal("rover_instanciado", _position)
+	rover_instanciado.emit(_position)
 
-func _parse_rover_position(start_data) -> Vector3:
+func _parse_rover_position(start_data: Variant) -> Vector3:
 	var _position = Vector3(0, rover_spawn_y, 0)
 
 	if typeof(start_data) == TYPE_VECTOR3:
@@ -405,31 +427,34 @@ func _limpiar_entorno() -> void:
 		child.queue_free()
 	current_level_root.get_children().clear()
 
-func _crear_contenedor_node(x_index: int, z_index: int) -> Node3D:
+func _crear_contenedor_node(x_index: int, z_index: int, tile_name: String = "") -> Node3D:
 	var container_stack = Node3D.new()
 	container_stack.name = "ContenedorStack_%d_%d" % [x_index, z_index]
+	if tile_name != "":
+		container_stack.name = tile_name + "_contenedores"
 	container_stack.transform.origin = Vector3(x_index * tile_spacing, 0.0, z_index * tile_spacing)
 	
 	# Agregar al grupo de edificios para que la cámara con transparencia lo detecte
 	container_stack.add_to_group("buildings")
 	
-	var wall_height = tile_spacing
-	var wall_y_offset = wall_height / 2.0
+	if ConfigDebug and ConfigDebug.muro_colision_activado:
+		var wall_height = tile_spacing
+		var wall_y_offset = wall_height / 2.0
 	
-	var wall_body = StaticBody3D.new()
-	wall_body.name = "MuroColision"
-	wall_body.collision_layer = 1
-	wall_body.collision_mask = 1
-	
-	var wall_shape = CollisionShape3D.new()
-	wall_shape.name = "CollisionShape3D"
-	var box = BoxShape3D.new()
-	box.size = Vector3(tile_spacing, wall_height, tile_spacing)
-	wall_shape.shape = box
-	wall_shape.transform.origin = Vector3(0, wall_y_offset, 0)
-	
-	wall_body.add_child(wall_shape)
-	container_stack.add_child(wall_body)
+		var wall_body = StaticBody3D.new()
+		wall_body.name = "MuroColision"
+		wall_body.collision_layer = 1
+		wall_body.collision_mask = 1
+		
+		var wall_shape = CollisionShape3D.new()
+		wall_shape.name = "CollisionShape3D"
+		var box = BoxShape3D.new()
+		box.size = Vector3(tile_spacing, wall_height, tile_spacing)
+		wall_shape.shape = box
+		wall_shape.transform.origin = Vector3(0, wall_y_offset, 0)
+		
+		wall_body.add_child(wall_shape)
+		container_stack.add_child(wall_body)
 	
 	# Cantidad de contenedores en la pila: entre 1 y 3
 	var stack_count = randi_range(1, 3)

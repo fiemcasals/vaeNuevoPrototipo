@@ -1,8 +1,8 @@
 [gd_scene load_steps=4 format=3 uid="uid://bj66tha8yadrt"]
 
-[ext_resource type="Script" uid="uid://bee7caevtasx3" path="res://addons/assetplacer/ui/components/node_path_selector/node_path_selector_glue.gd" id="1_7yhf7"]
-[ext_resource type="Script" uid="uid://1hs18j7r1o7i" path="res://addons/assetplacer/ui/components/node_path_selector/node_path_selector.gd" id="1_d7kfj"]
-[ext_resource type="Script" uid="uid://celfs34sbxnqp" path="res://addons/assetplacer/ui/components/node_path_selector/node_path_selection_button.gd" id="2_owr3c"]
+[ext_resource type="Script" path="res://addons/assetplacer/ui/components/node_path_selector/node_path_selector_glue.gd" id="1_7yhf7"]
+[ext_resource type="Script" path="res://addons/assetplacer/ui/components/node_path_selector/node_path_selector.gd" id="1_d7kfj"]
+[ext_resource type="Script" path="res://addons/assetplacer/ui/components/node_path_selector/node_path_selection_button.gd" id="2_owr3c"]
 
 [node name="NodePathSelectorUi" type="HBoxContainer"]
 size_flags_horizontal = 0

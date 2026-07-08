@@ -1,6 +1,6 @@
 [gd_scene format=3 uid="uid://bdfjr7uiyx4ka"]
 
-[ext_resource type="PackedScene" uid="uid://dxeh5b8eqdgwb" path="res://Modelos3D/Imports/KayKit_City_Builder_Bits_1.0_FREE/Assets/gltf/road_straight.gltf" id="1_4qn5a"]
+[ext_resource type="PackedScene" path="res://Modelos3D/Imports/KayKit_City_Builder_Bits_1.0_FREE/Assets/gltf/road_straight.gltf" id="1_4qn5a"]
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_u2kox"]
 size = Vector3(2, 0.2, 2)

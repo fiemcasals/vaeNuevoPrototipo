@@ -3,7 +3,7 @@ extends Camera3D
 func _ready() -> void:
 	SignalBus.change_cam.connect(change_state)
 
-func change_state(cam:int):
+func change_state(cam: int) -> void:
 	if cam==1:
 		current=true
 	if cam==3:

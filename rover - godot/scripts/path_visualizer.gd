@@ -9,7 +9,7 @@ var corners_mesh_instance: MeshInstance3D
 var corners_immediate_mesh: ImmediateMesh
 var corners_material: StandardMaterial3D
 
-func _ready():
+func _ready() -> void:
 	mesh_instance = MeshInstance3D.new()
 	immediate_mesh = ImmediateMesh.new()
 	
@@ -43,7 +43,7 @@ func _ready():
 	
 	visible = false
 
-func draw_path(points: PackedVector3Array):
+func draw_path(points: PackedVector3Array) -> void:
 	clear_path_mesh()
 	
 	if points.size() < 2:
@@ -66,7 +66,7 @@ func draw_path(points: PackedVector3Array):
 		immediate_mesh.surface_add_vertex(draw_point)
 	immediate_mesh.surface_end()
 
-func draw_corners(points: PackedVector3Array):
+func draw_corners(points: PackedVector3Array) -> void:
 	if corners_immediate_mesh:
 		corners_immediate_mesh.clear_surfaces()
 		if points.size() == 0:
@@ -84,7 +84,7 @@ func draw_corners(points: PackedVector3Array):
 				corners_immediate_mesh.surface_add_vertex(vertex)
 			corners_immediate_mesh.surface_end()
 
-func draw_path_segment(start: Vector3, end: Vector3):
+func draw_path_segment(start: Vector3, end: Vector3) -> void:
 	clear()
 	visible = true
 	
@@ -96,18 +96,18 @@ func draw_path_segment(start: Vector3, end: Vector3):
 	
 	immediate_mesh.surface_end()
 
-func clear_path_mesh():
+func clear_path_mesh() -> void:
 	if immediate_mesh:
 		immediate_mesh.clear_surfaces()
 
-func clear():
+func clear() -> void:
 	if immediate_mesh:
 		immediate_mesh.clear_surfaces()
 	if corners_immediate_mesh:
 		corners_immediate_mesh.clear_surfaces()
 	visible = false
 
-func set_color(color: Color):
+func set_color(color: Color) -> void:
 	if material:
 		material.albedo_color = color
 		material.emission = color

@@ -153,11 +153,11 @@ func _a_star(start: Vector2i, goal: Vector2i) -> Array:
 func _heuristic(a: Vector2i, b: Vector2i) -> float:
 	return abs(a.x - b.x) + abs(a.y - b.y)
 
-func _get_lowest_f_score(set: Array, f_score: Dictionary) -> Vector2i:
-	var lowest = set[0]
+func _get_lowest_f_score(open_set: Array, f_score: Dictionary) -> Vector2i:
+	var lowest = open_set[0]
 	var lowest_f = f_score[lowest]
 	
-	for node in set:
+	for node in open_set:
 		if f_score[node] < lowest_f:
 			lowest = node
 			lowest_f = f_score[node]
@@ -220,7 +220,10 @@ func advance_to_next_waypoint() -> bool:
 	current_path_index += 1
 	if current_path_index >= current_path.size():
 		is_navigating = false
+		# Emit both signals: target_reached for reaching the final target
+		# and path_completed for overall path traversal completion.
 		target_reached.emit()
+		path_completed.emit()
 		return false
 	return true
 

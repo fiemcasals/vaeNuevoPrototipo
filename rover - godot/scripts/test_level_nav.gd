@@ -2,7 +2,7 @@ extends Node3D
 
 const MENU_PATH = "res://scenes/menu_principal.tscn"
 
-@onready var btn_volver = $UIOverlay/BtnVolverMenu
+@onready var btn_volver: Button = $UIOverlay/BtnVolverMenu
 
 func _ready() -> void:
 	if btn_volver:

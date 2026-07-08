@@ -2,8 +2,8 @@ extends Control
 
 const MENU_PATH = "res://scenes/menu_principal.tscn"
 
-@onready var file_dialog = $FileDialog
-@onready var btn_volver = $BtnVolverMenu
+@onready var file_dialog: FileDialog = $FileDialog
+@onready var btn_volver: Button = $BtnVolverMenu
 
 var selected_color: Color = Color.WHITE
 var colors = [
@@ -11,9 +11,9 @@ var colors = [
 	Color.ORANGE, Color.PURPLE,
 ]
 
-@onready var grid = $GridContainer
-@onready var guardar_btn = $ButtonsContainer/Guardar
-@onready var cargar_btn = $ButtonsContainer/CargarGrilla
+@onready var grid: GridContainer = $GridContainer
+@onready var guardar_btn: Button = $ButtonsContainer/Guardar
+@onready var cargar_btn: Button = $ButtonsContainer/CargarGrilla
 var selected_btn: Button = null
 
 const GRID_COLS = 16
@@ -30,10 +30,10 @@ const TILE_TYPE_COLORS = {
 	"objetivo": Color.PURPLE,
 }
 
-var grid_colors = {}  # {Vector2i: Color}
+var grid_colors: Dictionary = {}  # {Vector2i: Color}
 var is_painting = false
 
-func _ready():
+func _ready() -> void:
 	for color in colors:
 		var btn = Button.new()
 		btn.custom_minimum_size = Vector2(32, 32)
@@ -60,24 +60,24 @@ func _volver_al_menu() -> void:
 	get_tree().change_scene_to_file(MENU_PATH)
 	
 
-func _on_guardar_pressed():
+func _on_guardar_pressed() -> void:
 	file_dialog.file_mode = FileDialog.FILE_MODE_SAVE_FILE
 	file_dialog.title = "Guardar grilla"
 	file_dialog.current_file = "pencil_grid.json"
 	file_dialog.popup_centered(Vector2(800, 600))
 
-func _on_cargar_pressed():
+func _on_cargar_pressed() -> void:
 	file_dialog.file_mode = FileDialog.FILE_MODE_OPEN_FILE
 	file_dialog.title = "Cargar grilla"
 	file_dialog.popup_centered(Vector2(800, 600))
-func _on_file_selected(path: String):
+func _on_file_selected(path: String) -> void:
 	if file_dialog.file_mode == FileDialog.FILE_MODE_SAVE_FILE:
 		_guardar(path)
 	else:
 		_cargar(path)
 
 
-func _guardar(path: String):
+func _guardar(path: String) -> void:
 	var file = FileAccess.open(path, FileAccess.WRITE)
 	if file == null:
 		push_error("No se pudo abrir el archivo para guardar: %s" % path)
@@ -104,7 +104,7 @@ func _guardar(path: String):
 	file.close()
 	print("Grilla guardada en formato de tiles: %s" % path)
 
-func _cargar(path: String):
+func _cargar(path: String) -> void:
 	if not FileAccess.file_exists(path):
 		push_warning("No existe el archivo: %s" % path)
 		return
@@ -173,7 +173,7 @@ func _get_color_from_tile_type(tile_type: String) -> Color:
 		_:
 			return Color.BLACK
 
-func _load_tiles_from_matrix(tile_matrix) -> void:
+func _load_tiles_from_matrix(tile_matrix: Array) -> void:
 	for row_index in tile_matrix.size():
 		var row = tile_matrix[row_index]
 		if typeof(row) != TYPE_ARRAY:
@@ -189,12 +189,12 @@ func _load_tiles_from_matrix(tile_matrix) -> void:
 				color = Color.BLACK
 			grid_colors[Vector2i(col_index, row_index)] = color
 
-func _load_cells_from_legacy_format(cells) -> void:
+func _load_cells_from_legacy_format(cells: Array) -> void:
 	for entry in cells:
 		var cell = Vector2i(entry["x"], entry["y"])
 		var color_data = entry["color"]
 		grid_colors[cell] = Color(color_data[0], color_data[1], color_data[2], color_data[3])
-func select_color(color: Color, btn: Button):
+func select_color(color: Color, btn: Button) -> void:
 	selected_color = color
 
 	# Resetear botón anterior
@@ -232,7 +232,7 @@ func _draw():
 			# Borde
 			draw_rect(rect, Color.BLACK, false, 1.0)
 
-func _gui_input(event: InputEvent):
+func _gui_input(event: InputEvent) -> void:
 	if event is InputEventMouseButton:
 		is_painting = event.pressed
 

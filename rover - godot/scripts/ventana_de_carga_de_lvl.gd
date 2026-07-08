@@ -31,8 +31,8 @@ func _on_button_cargar_nivel_pressed() -> void:
 		file_dialog.popup_centered(Vector2(800, 600))
 
 func _on_file_selected(path: String) -> void:
-	emit_signal("nivel_seleccionado", path)
+	nivel_seleccionado.emit(path)
 	_emit_path_to_bus(path)
 
 func _emit_path_to_bus(path: String) -> void:
-	SignalBus.emit_signal("nivel_seleccionado", path)
+	SignalBus.nivel_seleccionado.emit(path)

@@ -15,7 +15,7 @@ var conectado = false
 @onready var btn_conectar: Button = $Panel/MarginContainer/VBoxContainer/HBoxBotones/BtnConectar
 @onready var btn_desconectar: Button = $Panel/MarginContainer/VBoxContainer/HBoxBotones/BtnDesconectar
 @onready var btn_accion: Button = $"Panel/MarginContainer/VBoxContainer/HBoxBotones/BtnAccion"
-@onready var joystick = $JoystickArea
+@onready var joystick: Control = $JoystickArea
 
 # ═══════════════════════════════════════════
 func _ready():
@@ -87,19 +87,19 @@ func _process(_delta):
 # ═══════════════════════════════════════════
 # FOCUS / MULTITAREA
 # ═══════════════════════════════════════════
-func _notification(what):
+func _notification(what: int) -> void:
 	if what == NOTIFICATION_APPLICATION_FOCUS_IN:
 		print("App en primer plano. Verificando conexión...")
 		_forzar_verificacion_red()
 
-func _forzar_verificacion_red():
+func _forzar_verificacion_red() -> void:
 	socket.poll()
 	var state = socket.get_ready_state()
 	if state != WebSocketPeer.STATE_OPEN:
 		print("Conexión fantasma detectada. Reseteando...")
 		_limpiar_y_reconnect()
 
-func _limpiar_y_reconnect():
+func _limpiar_y_reconnect() -> void:
 	socket.close()
 	conectado = false
 	label_estado.text = "Desconectado"
@@ -109,7 +109,7 @@ func _limpiar_y_reconnect():
 # ═══════════════════════════════════════════
 # ENVIAR COMANDOS
 # ═══════════════════════════════════════════
-func enviar_comando(comando: String):
+func enviar_comando(comando: String) -> void:
 	if socket.get_ready_state() == WebSocketPeer.STATE_OPEN:
 		socket.send_text(comando)
 		print("Enviado: ", comando)
@@ -120,18 +120,14 @@ func enviar_comando(comando: String):
 # ⚡ STUBS — RELLENÁ CON TUS COMANDOS
 # ═══════════════════════════════════════════
 
-func _on_joystick_movido(direccion: Vector2):
-	# TODO: Elegí qué enviar según la dirección del joystick
-	# Ej: enviar_comando("MOVER " + str(direccion))
+func _on_joystick_movido(direccion: Vector2) -> void:
 	enviar_comando("MOVER " + str(direccion))
 	pass
 
-func _on_joystick_soltado():
-	# TODO: Comando cuando se suelta el joystick (ej: "STOP")
+func _on_joystick_soltado() -> void:
 	enviar_comando("STOP")
 	pass
 
-func _on_boton_accion():
-	# TODO: Comando del botón de acción extra
+func _on_boton_accion() -> void:
 	enviar_comando("ACCION")
 	pass

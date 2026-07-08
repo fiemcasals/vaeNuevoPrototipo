@@ -1,6 +1,6 @@
 [gd_scene format=3 uid="uid://bhnvpcrqn6ydq"]
 
-[ext_resource type="Script" uid="uid://c2x2y4w12ouks" path="res://scripts/pencil_panel.gd" id="1_pekxn"]
+[ext_resource type="Script" path="res://scripts/pencil_panel.gd" id="1_pekxn"]
 
 [node name="ventana_creacion_de_nivel" type="Control" unique_id=557938243]
 layout_mode = 3

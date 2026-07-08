@@ -2,29 +2,30 @@ extends Node3D
 
 const MENU_PATH = "res://scenes/menu_principal.tscn"
 
-@onready var btn_volver = $UIOverlay/BtnVolverMenu
-@onready var btn_cargar = $UIOverlay/BtnCargarNivel
-@onready var btn_cambiar_camara = $UIOverlay/BtnCambiarCamara
-@onready var btn_navegar = $UIOverlay/BtnNavegar
-@onready var btn_ir_spawn = $UIOverlay/BtnIrSpawn
-@onready var btn_reaparecer = $UIOverlay/BtnReaparecer
-@onready var btn_voltear = $UIOverlay/BtnVoltear
-@onready var file_dialog = $UIOverlay/FileDialog
-@onready var target_selector = $UIOverlay/TargetSelector
-@onready var camara_superior = $Camera3D
-@onready var camara_seguimiento = $CamaraSeguimiento
-@onready var creador = $CreadorDeNivel
-@onready var navigation = $NavigationSystem
-@onready var path_visualizer = $PathVisualizer
-@onready var auto_controller = $RoverAutoController
-@onready var camera_transparency = $CameraTransparency
-@onready var btn_test_aleatorio = $UIOverlay/BtnTestAleatorio
-@onready var spin_box_test = $UIOverlay/SpinBoxTest
-@onready var btn_conectar_sensor = $UIOverlay/BtnConectarSensor
-@onready var lbl_estado_autopilot = $UIOverlay/LblEstadoAutopilot
+@onready var btn_volver: Button = $UIOverlay/BtnVolverMenu
+@onready var btn_cargar: Button = $UIOverlay/BtnCargarNivel
+@onready var btn_cambiar_camara: Button = $UIOverlay/BtnCambiarCamara
+@onready var btn_navegar: Button = $UIOverlay/BtnNavegar
+@onready var btn_ir_spawn: Button = $UIOverlay/BtnIrSpawn
+@onready var btn_reaparecer: Button = $UIOverlay/BtnReaparecer
+@onready var btn_voltear: Button = $UIOverlay/BtnVoltear
+@onready var file_dialog: FileDialog = $UIOverlay/FileDialog
+@onready var target_selector: Control = $UIOverlay/TargetSelector
+@onready var camara_superior: Camera3D = $Camera3D
+@onready var camara_seguimiento: Camera3D = $CamaraSeguimiento
+@onready var camara_libre: Camera3D = $CamaraLibre
+@onready var creador: Node3D = $CreadorDeNivel
+@onready var navigation: Node3D = $NavigationSystem
+@onready var path_visualizer: Node3D = $PathVisualizer
+@onready var auto_controller: Node = $RoverAutoController
+@onready var camera_transparency: Node3D = $CameraTransparency
+@onready var btn_test_aleatorio: Button = $UIOverlay/BtnTestAleatorio
+@onready var spin_box_test: SpinBox = $UIOverlay/SpinBoxTest
+@onready var btn_conectar_sensor: Button = $UIOverlay/BtnConectarSensor
+@onready var lbl_estado_autopilot: Label = $UIOverlay/LblEstadoAutopilot
 
-var camara_actual = 0
-var nivel_cargado = false
+var camara_actual: int = 0
+var nivel_cargado: bool = false
 var rotacion_original: Transform3D
 
 # Nuevas variables para selector de modalidad e interfaz
@@ -36,6 +37,8 @@ var test_mode_active: bool = false
 var test_destinations_remaining: int = 0
 var last_target_cell: Vector2i = Vector2i(-1, -1)
 var _navigating_to_spawn: bool = false
+var panel_debug: Control
+var panel_debug_visible: bool = false
 
 func _ready() -> void:
 	randomize()
@@ -55,7 +58,7 @@ func _ready() -> void:
 		target_selector.cancelled.connect(_on_target_selector_cancelled)
 	
 	if creador:
-		creador.connect("rover_instanciado", Callable(self, "_on_rover_instanciado"))
+		creador.rover_instanciado.connect(_on_rover_instanciado)
 	
 	if navigation:
 		navigation.path_calculated.connect(_on_path_calculated)
@@ -86,6 +89,7 @@ func _ready() -> void:
 	)
 	
 	setup_modality_uis()
+	_crear_panel_debug()
 	
 	# Carga automática de nivel prueba1.json para agilizar las pruebas
 	_cargar_nivel_automatico.call_deferred()
@@ -119,6 +123,11 @@ func _input(event: InputEvent) -> void:
 	
 	if event.is_action_pressed("switch_cam"):
 		_cambiar_camara()
+	
+	if event is InputEventKey and event.pressed and event.keycode == KEY_F1:
+		panel_debug_visible = not panel_debug_visible
+		if panel_debug:
+			panel_debug.visible = panel_debug_visible
 
 func _volver_al_menu() -> void:
 	get_tree().change_scene_to_file(MENU_PATH)
@@ -127,7 +136,7 @@ func _on_cargar_presionado() -> void:
 	file_dialog.popup_centered(Vector2(800, 600))
 
 func _on_archivo_seleccionado(path: String) -> void:
-	SignalBus.emit_signal("nivel_seleccionado", path)
+	SignalBus.nivel_seleccionado.emit(path)
 
 func _on_rover_instanciado(_position: Vector3) -> void:
 	var rover = creador.current_rover
@@ -341,22 +350,86 @@ func _on_cambiar_camara_presionado() -> void:
 	_cambiar_camara()
 
 func _cambiar_camara() -> void:
-	camara_actual = (camara_actual + 1) % 2
-	SignalBus.emit_signal("change_cam", camara_actual)
+	camara_actual = (camara_actual + 1) % 3
+	SignalBus.change_cam.emit(camara_actual)
 
 func _on_change_cam(cam: int) -> void:
 	if RoverConfig and RoverConfig.op_mode == "turret":
 		return
-	if cam == 0:
-		camara_superior.current = true
-		camara_seguimiento.current = false
-		if camera_transparency:
-			camera_transparency.camera = camara_superior
-	else:
-		camara_superior.current = false
-		camara_seguimiento.current = true
-		if camera_transparency:
-			camera_transparency.camera = camara_seguimiento
+	
+	camara_superior.current = (cam == 0)
+	camara_seguimiento.current = (cam == 1)
+	camara_libre.current = (cam == 2)
+	
+	match cam:
+		0:
+			if camera_transparency:
+				camera_transparency.camera = camara_superior
+		1:
+			if camera_transparency:
+				camera_transparency.camera = camara_seguimiento
+		2:
+			if camera_transparency:
+				camera_transparency.camera = camara_libre
+
+func _crear_panel_debug() -> void:
+	panel_debug = Control.new()
+	panel_debug.name = "PanelDebug"
+	panel_debug.visible = false
+	panel_debug.set_anchors_preset(Control.PRESET_TOP_RIGHT)
+	panel_debug.position = Vector2(-300, 10)
+	$UIOverlay.add_child(panel_debug)
+	
+	var bg = Panel.new()
+	bg.name = "Fondo"
+	bg.custom_minimum_size = Vector2(290, 280)
+	bg.set_anchors_preset(Control.PRESET_FULL_RECT)
+	panel_debug.add_child(bg)
+	
+	var vbox = VBoxContainer.new()
+	vbox.name = "VBox"
+	vbox.set_anchors_preset(Control.PRESET_FULL_RECT)
+	vbox.add_theme_constant_override("separation", 4)
+	bg.add_child(vbox)
+	
+	var title_bg = Panel.new()
+	var title_style = StyleBoxFlat.new()
+	title_style.bg_color = Color(0.1, 0.1, 0.1, 1)
+	title_bg.add_theme_stylebox_override("panel", title_style)
+	vbox.add_child(title_bg)
+	
+	var title = Label.new()
+	title.text = "  Debug Toggles (F1)"
+	title.add_theme_color_override("font_color", Color(1, 1, 1, 1))
+	title_bg.add_child(title)
+	
+	var scroll = ScrollContainer.new()
+	scroll.custom_minimum_size = Vector2(0, 250)
+	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	vbox.add_child(scroll)
+	
+	var content = VBoxContainer.new()
+	content.add_theme_constant_override("separation", 4)
+	scroll.add_child(content)
+	
+	_agregar_toggle_debug(content, "Muro colision tiles", "muro_colision_activado")
+	_agregar_toggle_debug(content, "Zonas evasion circular", "evasion_zonas_activada")
+	_agregar_toggle_debug(content, "Reversa en zona roja", "evasion_reversa_activada")
+	_agregar_toggle_debug(content, "Mostrar gizmos evasion", "evasion_mostrar_gizmos")
+	_agregar_toggle_debug(content, "Lane shift (desplazar carril)", "lane_shift_activado")
+	_agregar_toggle_debug(content, "Suavizado de ruta", "suavizado_ruta_activado")
+	_agregar_toggle_debug(content, "Acortar ruta al destino", "acortar_ruta_activado")
+	_agregar_toggle_debug(content, "Enviar evasion al brain", "enviar_evasion_brain")
+
+func _agregar_toggle_debug(parent: Control, label_text: String, propiedad: String) -> void:
+	var check = CheckBox.new()
+	check.text = label_text
+	check.button_pressed = ConfigDebug.get(propiedad)
+	check.toggled.connect(func(v):
+		ConfigDebug.set(propiedad, v)
+		ConfigDebug.config_changed.emit(propiedad, v)
+	)
+	parent.add_child(check)
 
 func _on_test_aleatorio_presionado() -> void:
 	if not nivel_cargado or not creador or not creador.current_rover:
@@ -732,10 +805,10 @@ func setup_modality_uis() -> void:
 	turret_angle_label.add_theme_font_size_override("font_size", 18)
 	v_ang.add_child(turret_angle_label)
 
-func set_standard_ui_visible(is_visible: bool) -> void:
+func set_standard_ui_visible(p_visible: bool) -> void:
 	for child in $UIOverlay.get_children():
 		if child != selection_hub and child != turret_hud:
-			child.visible = is_visible
+			child.visible = p_visible
 
 func update_mode_visibility() -> void:
 	var rover = creador.current_rover

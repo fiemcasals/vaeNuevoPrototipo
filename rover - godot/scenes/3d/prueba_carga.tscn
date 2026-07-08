@@ -1,9 +1,9 @@
 [gd_scene format=3 uid="uid://bndtoyca6olqk"]
 
-[ext_resource type="PackedScene" uid="uid://2sxonq124mdi" path="res://scenes/2D/ventana_de_carga_de_lvl.tscn" id="1_vwl7b"]
-[ext_resource type="Script" uid="uid://b2geqymnq1suh" path="res://scripts/creador_de_lvl.gd" id="2_ixcw7"]
-[ext_resource type="PackedScene" uid="uid://crtqig5l16ktu" path="res://Modelos3D/Roads/road.tscn" id="3_a3qe1"]
-[ext_resource type="PackedScene" uid="uid://c6dybhv4bqb1y" path="res://Modelos3D/Usuario/Rover2.tscn" id="4_1bjbg"]
+[ext_resource type="PackedScene" path="res://scenes/2D/ventana_de_carga_de_lvl.tscn" id="1_vwl7b"]
+[ext_resource type="Script" path="res://scripts/creador_de_lvl.gd" id="2_ixcw7"]
+[ext_resource type="PackedScene" path="res://Modelos3D/Roads/road.tscn" id="3_a3qe1"]
+[ext_resource type="PackedScene" path="res://Modelos3D/Usuario/Rover2.tscn" id="4_1bjbg"]
 
 [node name="Prueba_Carga" type="Node3D" unique_id=531627533]
 
