@@ -1,0 +1,307 @@
+[gd_scene format=3 uid="uid://c0mv4kxtbjbpf"]
+
+[ext_resource type="Script" uid="uid://baprjcod1fm3g" path="res://simulador_esp32.gd" id="1_sim"]
+
+[node name="SimuladorESP32" type="Control" unique_id=-1589934591]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_sim")
+
+[node name="Fondo" type="ColorRect" parent="." unique_id=8001]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.1, 0.1, 0.13, 1)
+
+[node name="MapaArea" type="Control" parent="." unique_id=7027]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="FondoMapa" type="ColorRect" parent="MapaArea" unique_id=7028]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.05, 0.05, 0.08, 0.85)
+
+[node name="LabelTituloMapa" type="Label" parent="MapaArea" unique_id=7029]
+layout_mode = 0
+offset_left = 4.0
+offset_top = 4.0
+offset_right = 200.0
+offset_bottom = 24.0
+theme_override_colors/font_color = Color(0.7, 0.7, 0.7, 1)
+text = "Mapa Simulador"
+
+[node name="LabelCoords" type="Label" parent="MapaArea" unique_id=7030]
+layout_mode = 0
+offset_left = 4.0
+offset_top = 22.0
+offset_right = 350.0
+offset_bottom = 42.0
+theme_override_colors/font_color = Color(0.5, 0.8, 0.5, 1)
+text = "GPS: 0.000000, 0.000000"
+
+[node name="BloqueRover" type="ColorRect" parent="MapaArea" unique_id=7031]
+layout_mode = 0
+offset_right = 16.0
+offset_bottom = 16.0
+color = Color(1, 0.2, 0.1, 0.95)
+
+[node name="CruzH" type="ColorRect" parent="MapaArea" unique_id=7032]
+layout_mode = 0
+offset_right = 600.0
+offset_bottom = 1.0
+color = Color(1, 1, 1, 0.08)
+
+[node name="CruzV" type="ColorRect" parent="MapaArea" unique_id=7033]
+layout_mode = 0
+offset_right = 1.0
+offset_bottom = 400.0
+color = Color(1, 1, 1, 0.08)
+
+[node name="MenuButton" type="MenuButton" parent="." unique_id=8034]
+layout_mode = 0
+offset_left = 4.0
+offset_top = 4.0
+offset_right = 120.0
+offset_bottom = 32.0
+text = "Ventanas"
+switch_on_hover = true
+
+[node name="VentanaServidor" type="Panel" parent="." unique_id=8002]
+layout_mode = 0
+offset_left = 8.0
+offset_top = 40.0
+offset_right = 278.0
+offset_bottom = 210.0
+
+[node name="MarginContainer" type="MarginContainer" parent="VentanaServidor" unique_id=8003]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 6
+theme_override_constants/margin_top = 4
+theme_override_constants/margin_right = 6
+theme_override_constants/margin_bottom = 4
+
+[node name="VBoxContainer" type="VBoxContainer" parent="VentanaServidor/MarginContainer" unique_id=8004]
+layout_mode = 2
+
+[node name="TitleServidor" type="HBoxContainer" parent="VentanaServidor/MarginContainer/VBoxContainer" unique_id=8005]
+layout_mode = 2
+
+[node name="LabelTitle" type="Label" parent="VentanaServidor/MarginContainer/VBoxContainer/TitleServidor" unique_id=8006]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 13
+text = "Servidor"
+
+[node name="BtnCerrar" type="Button" parent="VentanaServidor/MarginContainer/VBoxContainer/TitleServidor" unique_id=8007]
+custom_minimum_size = Vector2(22, 22)
+layout_mode = 2
+theme_override_font_sizes/font_size = 10
+text = "X"
+
+[node name="SepTitle" type="HSeparator" parent="VentanaServidor/MarginContainer/VBoxContainer" unique_id=8008]
+layout_mode = 2
+
+[node name="HBoxPuerto" type="HBoxContainer" parent="VentanaServidor/MarginContainer/VBoxContainer" unique_id=7005]
+layout_mode = 2
+
+[node name="LabelPuerto" type="Label" parent="VentanaServidor/MarginContainer/VBoxContainer/HBoxPuerto" unique_id=7006]
+layout_mode = 2
+text = "Puerto:"
+
+[node name="LineEditPuerto" type="LineEdit" parent="VentanaServidor/MarginContainer/VBoxContainer/HBoxPuerto" unique_id=7007]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "9080"
+
+[node name="HBoxBotones" type="HBoxContainer" parent="VentanaServidor/MarginContainer/VBoxContainer" unique_id=7008]
+layout_mode = 2
+
+[node name="BtnIniciar" type="Button" parent="VentanaServidor/MarginContainer/VBoxContainer/HBoxBotones" unique_id=7009]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Iniciar"
+
+[node name="BtnDetener" type="Button" parent="VentanaServidor/MarginContainer/VBoxContainer/HBoxBotones" unique_id=7010]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Detener"
+
+[node name="LabelEstado" type="Label" parent="VentanaServidor/MarginContainer/VBoxContainer" unique_id=7011]
+layout_mode = 2
+text = "Servidor detenido"
+horizontal_alignment = 1
+
+[node name="VentanaConfig" type="Panel" parent="." unique_id=8009]
+layout_mode = 0
+offset_left = 8.0
+offset_top = 220.0
+offset_right = 278.0
+offset_bottom = 460.0
+
+[node name="MarginContainer" type="MarginContainer" parent="VentanaConfig" unique_id=8010]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 6
+theme_override_constants/margin_top = 4
+theme_override_constants/margin_right = 6
+theme_override_constants/margin_bottom = 4
+
+[node name="VBoxContainer" type="VBoxContainer" parent="VentanaConfig/MarginContainer" unique_id=8011]
+layout_mode = 2
+
+[node name="TitleConfig" type="HBoxContainer" parent="VentanaConfig/MarginContainer/VBoxContainer" unique_id=8012]
+layout_mode = 2
+
+[node name="LabelTitle" type="Label" parent="VentanaConfig/MarginContainer/VBoxContainer/TitleConfig" unique_id=8013]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 13
+text = "Configuracion"
+
+[node name="BtnCerrar" type="Button" parent="VentanaConfig/MarginContainer/VBoxContainer/TitleConfig" unique_id=8014]
+custom_minimum_size = Vector2(22, 22)
+layout_mode = 2
+theme_override_font_sizes/font_size = 10
+text = "X"
+
+[node name="SepTitle" type="HSeparator" parent="VentanaConfig/MarginContainer/VBoxContainer" unique_id=8015]
+layout_mode = 2
+
+[node name="HBoxLat" type="HBoxContainer" parent="VentanaConfig/MarginContainer/VBoxContainer" unique_id=7016]
+layout_mode = 2
+
+[node name="LabelLat" type="Label" parent="VentanaConfig/MarginContainer/VBoxContainer/HBoxLat" unique_id=7017]
+layout_mode = 2
+text = "Lat:"
+
+[node name="SpinLat" type="SpinBox" parent="VentanaConfig/MarginContainer/VBoxContainer/HBoxLat" unique_id=7018]
+layout_mode = 2
+size_flags_horizontal = 3
+min_value = -90.0
+max_value = 90.0
+step = 0.0001
+allow_greater = true
+allow_lesser = true
+
+[node name="HBoxLon" type="HBoxContainer" parent="VentanaConfig/MarginContainer/VBoxContainer" unique_id=7019]
+layout_mode = 2
+
+[node name="LabelLon" type="Label" parent="VentanaConfig/MarginContainer/VBoxContainer/HBoxLon" unique_id=7020]
+layout_mode = 2
+text = "Lon:"
+
+[node name="SpinLon" type="SpinBox" parent="VentanaConfig/MarginContainer/VBoxContainer/HBoxLon" unique_id=7021]
+layout_mode = 2
+size_flags_horizontal = 3
+min_value = -180.0
+max_value = 180.0
+step = 0.0001
+allow_greater = true
+allow_lesser = true
+
+[node name="HBoxVel" type="HBoxContainer" parent="VentanaConfig/MarginContainer/VBoxContainer" unique_id=7022]
+layout_mode = 2
+
+[node name="LabelVel" type="Label" parent="VentanaConfig/MarginContainer/VBoxContainer/HBoxVel" unique_id=7023]
+layout_mode = 2
+text = "Vel:"
+
+[node name="SpinVel" type="SpinBox" parent="VentanaConfig/MarginContainer/VBoxContainer/HBoxVel" unique_id=7024]
+layout_mode = 2
+size_flags_horizontal = 3
+min_value = 0.01
+step = 0.1
+value = 1.01
+allow_greater = true
+allow_lesser = true
+
+[node name="BtnAplicar" type="Button" parent="VentanaConfig/MarginContainer/VBoxContainer" unique_id=7025]
+layout_mode = 2
+text = "Aplicar"
+
+[node name="BtnReset" type="Button" parent="VentanaConfig/MarginContainer/VBoxContainer" unique_id=7026]
+layout_mode = 2
+text = "Reset (0, 0)"
+
+[node name="CheckManual" type="CheckBox" parent="VentanaConfig/MarginContainer/VBoxContainer" unique_id=70261]
+layout_mode = 2
+text = "Modo Manual (arrastrar)"
+
+[node name="VentanaLog" type="Panel" parent="." unique_id=8016]
+layout_mode = 0
+offset_left = 290.0
+offset_top = 40.0
+offset_right = 720.0
+offset_bottom = 200.0
+
+[node name="MarginContainer" type="MarginContainer" parent="VentanaLog" unique_id=8017]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 6
+theme_override_constants/margin_top = 4
+theme_override_constants/margin_right = 6
+theme_override_constants/margin_bottom = 4
+
+[node name="VBoxContainer" type="VBoxContainer" parent="VentanaLog/MarginContainer" unique_id=8018]
+layout_mode = 2
+
+[node name="TitleLog" type="HBoxContainer" parent="VentanaLog/MarginContainer/VBoxContainer" unique_id=8019]
+layout_mode = 2
+
+[node name="LabelTitle" type="Label" parent="VentanaLog/MarginContainer/VBoxContainer/TitleLog" unique_id=8020]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 13
+text = "Log"
+
+[node name="BtnCerrar" type="Button" parent="VentanaLog/MarginContainer/VBoxContainer/TitleLog" unique_id=8021]
+custom_minimum_size = Vector2(22, 22)
+layout_mode = 2
+theme_override_font_sizes/font_size = 10
+text = "X"
+
+[node name="SepTitle" type="HSeparator" parent="VentanaLog/MarginContainer/VBoxContainer" unique_id=8022]
+layout_mode = 2
+
+[node name="LabelUltimo" type="Label" parent="VentanaLog/MarginContainer/VBoxContainer" unique_id=7037]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.8, 0.3, 1)
+text = "Ultimo comando: ---"
+
+[node name="RichLog" type="RichTextLabel" parent="VentanaLog/MarginContainer/VBoxContainer" unique_id=7038]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+bbcode_enabled = true
+fit_content = true
+scroll_following = true

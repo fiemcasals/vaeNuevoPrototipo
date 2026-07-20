@@ -1,13 +1,13 @@
-[gd_scene format=3 uid="uid://bdc306muho5ux"]
+[gd_scene format=3 uid="uid://cyjunlfys0vnf"]
 
-[ext_resource type="Script" uid="uid://dupwlrap10os2" path="res://ControlRemotoAlESP.gd" id="1_ctrl"]
+[ext_resource type="Script" uid="uid://ddwwnfhx6njvg" path="res://prueba_mapa_gps.gd" id="1_ctrl"]
 [ext_resource type="Script" uid="uid://coo8ekm1xm5nr" path="res://JoystickVirtual.gd" id="2_joy"]
 [ext_resource type="Shader" uid="uid://c8oe43w083t6u" path="res://circle.gdshader" id="3_circ"]
 
 [sub_resource type="ShaderMaterial" id="mat_circle"]
 shader = ExtResource("3_circ")
 
-[node name="PruebaWebSocket" type="Control" unique_id=2124956854]
+[node name="PruebaMapaGPS" type="Control" unique_id=705032705]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -59,8 +59,8 @@ text = "IP:"
 [node name="LineEditIP" type="LineEdit" parent="Panel/MarginContainer/VBoxContainer/HBoxIP" unique_id=1007]
 layout_mode = 2
 size_flags_horizontal = 3
-text = "ws://10.24.206.226:81"
-placeholder_text = "ws://10.24.206.226:81"
+text = "ws://127.0.0.1:9080"
+placeholder_text = "ws://127.0.0.1:9080"
 
 [node name="HBoxBotones" type="HBoxContainer" parent="Panel/MarginContainer/VBoxContainer" unique_id=1008]
 layout_mode = 2
@@ -128,3 +128,104 @@ color = Color(1, 1, 1, 0.4)
 
 [node name="TimerReconexion" type="Timer" parent="." unique_id=623741363]
 wait_time = 3.0
+
+[node name="MapaArea" type="Control" parent="." unique_id=5001]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -250.0
+offset_top = -200.0
+offset_right = 250.0
+offset_bottom = 200.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="FondoMapa" type="ColorRect" parent="MapaArea" unique_id=5002]
+layout_mode = 0
+offset_right = 500.0
+offset_bottom = 400.0
+color = Color(0.05, 0.05, 0.08, 0.85)
+
+[node name="LabelTituloMapa" type="Label" parent="MapaArea" unique_id=5003]
+layout_mode = 0
+offset_left = 4.0
+offset_top = 4.0
+offset_right = 200.0
+offset_bottom = 24.0
+theme_override_colors/font_color = Color(0.7, 0.7, 0.7, 1)
+text = "Mapa GPS"
+
+[node name="LabelCoords" type="Label" parent="MapaArea" unique_id=5004]
+layout_mode = 0
+offset_left = 4.0
+offset_top = 22.0
+offset_right = 300.0
+offset_bottom = 42.0
+theme_override_colors/font_color = Color(0.5, 0.8, 0.5, 1)
+text = "GPS: ---"
+
+[node name="BloqueGPS" type="ColorRect" parent="MapaArea" unique_id=5005]
+layout_mode = 0
+offset_right = 20.0
+offset_bottom = 20.0
+color = Color(1, 0.3, 0.1, 0.95)
+
+[node name="CruzCentroH" type="ColorRect" parent="MapaArea" unique_id=5006]
+layout_mode = 0
+offset_right = 500.0
+offset_bottom = 1.0
+color = Color(1, 1, 1, 0.1)
+
+[node name="CruzCentroV" type="ColorRect" parent="MapaArea" unique_id=5007]
+layout_mode = 0
+offset_right = 1.0
+offset_bottom = 400.0
+color = Color(1, 1, 1, 0.1)
+
+[node name="PanelSensibilidad" type="Panel" parent="." unique_id=5008]
+layout_mode = 1
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -200.0
+offset_top = -50.0
+offset_right = 200.0
+offset_bottom = -8.0
+grow_horizontal = 2
+grow_vertical = 0
+
+[node name="MarginContainer" type="MarginContainer" parent="PanelSensibilidad" unique_id=5009]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 8
+theme_override_constants/margin_top = 4
+theme_override_constants/margin_right = 8
+theme_override_constants/margin_bottom = 4
+
+[node name="HBoxContainer" type="HBoxContainer" parent="PanelSensibilidad/MarginContainer" unique_id=5010]
+layout_mode = 2
+
+[node name="LabelSens" type="Label" parent="PanelSensibilidad/MarginContainer/HBoxContainer" unique_id=5011]
+layout_mode = 2
+text = "Sensibilidad"
+
+[node name="HSlider" type="HSlider" parent="PanelSensibilidad/MarginContainer/HBoxContainer" unique_id=5012]
+layout_mode = 2
+size_flags_horizontal = 3
+min_value = 0.1
+step = 0.1
+value = 1.1
+
+[node name="LabelSensibilidad" type="Label" parent="PanelSensibilidad/MarginContainer/HBoxContainer" unique_id=5013]
+layout_mode = 2
+text = "Sensibilidad: 1.0"
